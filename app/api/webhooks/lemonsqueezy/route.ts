@@ -4,8 +4,6 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { generateToken } from "@/lib/utils";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 function verifySignature(body: string, signature: string): boolean {
   const secret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET!;
   const hmac = crypto.createHmac("sha256", secret);
@@ -105,6 +103,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Send buyer email
+  const resend = new Resend(process.env.RESEND_API_KEY);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
   await resend.emails.send({
     from: "Photonia <noreply@photonia.mk>",
