@@ -10,9 +10,24 @@ export default async function DashboardGalleriesPage() {
 
   const { data: galleries } = await supabase
     .from("galleries")
-    .select(`*, photos(count)`)
+    .select("id, title, category, event_date, is_public, slug, created_at")
     .eq("photographer_id", user.id)
     .order("created_at", { ascending: false });
+
+  // Count photos per gallery separately to avoid RLS issues with embedded selects
+  const galleryIds = galleries?.map((g) => g.id) ?? [];
+  const photoCounts: Record<string, number> = {};
+
+  if (galleryIds.length) {
+    const { data: photos } = await supabase
+      .from("photos")
+      .select("gallery_id")
+      .in("gallery_id", galleryIds);
+
+    for (const p of photos ?? []) {
+      photoCounts[p.gallery_id] = (photoCounts[p.gallery_id] ?? 0) + 1;
+    }
+  }
 
   return (
     <div>
@@ -44,7 +59,7 @@ export default async function DashboardGalleriesPage() {
 
       <div className="flex flex-col gap-3">
         {galleries?.map((g) => {
-          const photoCount = (g.photos as unknown as { count: number }[])?.[0]?.count ?? 0;
+          const photoCount = photoCounts[g.id] ?? 0;
           return (
             <div
               key={g.id}
