@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, use } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { GALLERY_CATEGORIES } from "@/lib/types";
@@ -21,8 +21,8 @@ interface UploadingFile {
   error?: string;
 }
 
-export default function EditGalleryPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function EditGalleryPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const router = useRouter();
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ?? "";
 

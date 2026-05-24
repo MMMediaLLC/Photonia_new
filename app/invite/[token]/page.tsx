@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Loader2, Camera } from "lucide-react";
 
-export default function InvitePage({ params }: { params: Promise<{ token: string }> }) {
-  const { token } = use(params);
+export default function InvitePage({ params }: { params: { token: string } }) {
+  const { token } = params;
   const router = useRouter();
 
   const [invite, setInvite] = useState<{ email: string } | null>(null);
