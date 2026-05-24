@@ -1,15 +1,58 @@
 "use client";
 
+import { useState } from "react";
 import { useCart } from "./CartProvider";
-import { X, ShoppingCart, Trash2 } from "lucide-react";
+import { X, ShoppingCart, Trash2, Loader2 } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import type { LicenseType } from "@/lib/types";
 import Image from "next/image";
 import { getCloudinaryWatermarkedUrl } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 export default function CartDrawer() {
-  const { items, isOpen, closeCart, removeItem, updateLicense, total } = useCart();
+  const { items, isOpen, closeCart, removeItem, updateLicense, total, clearCart } = useCart();
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ?? "";
+  const router = useRouter();
+  const [checkingOut, setCheckingOut] = useState(false);
+
+  async function handleCheckout() {
+    if (!items.length) return;
+    setCheckingOut(true);
+
+    const payload = {
+      items: items.map((i) => ({
+        photoId: i.photo.id,
+        license: i.license,
+        price:
+          i.license === "personal"
+            ? i.photo.price_personal
+            : i.license === "commercial"
+            ? i.photo.price_commercial
+            : i.photo.price_extended,
+      })),
+    };
+
+    const res = await fetch("/api/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const json = await res.json();
+    if (!res.ok) {
+      alert(json.error ?? "Грешка при плаќање. Обиди се повторно.");
+      setCheckingOut(false);
+      return;
+    }
+
+    clearCart();
+    closeCart();
+    if (json.url) {
+      window.location.href = json.url;
+    } else {
+      router.push("/checkout/success");
+    }
+  }
 
   if (!isOpen) return null;
 
@@ -124,8 +167,13 @@ export default function CartDrawer() {
               <span className="text-[#888] text-sm">Вкупно</span>
               <span className="text-xl font-bold text-[#e8c97e]">{formatPrice(total)}</span>
             </div>
-            <button className="w-full bg-[#e8c97e] text-[#0a0a0a] font-semibold py-3 rounded-card hover:bg-[#d4b46a] transition-colors">
-              Плати сега
+            <button
+              onClick={handleCheckout}
+              disabled={checkingOut}
+              className="w-full flex items-center justify-center gap-2 bg-[#e8c97e] text-[#0a0a0a] font-semibold py-3 rounded-card hover:bg-[#d4b46a] transition-colors disabled:opacity-60"
+            >
+              {checkingOut && <Loader2 size={14} className="animate-spin" />}
+              {checkingOut ? "Пренасочување..." : "Плати сега"}
             </button>
             <p className="text-xs text-[#888] text-center mt-3">
               Безбедна наплата преку LemonSqueezy
