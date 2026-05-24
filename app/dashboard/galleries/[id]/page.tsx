@@ -9,7 +9,7 @@ import { getCloudinaryWatermarkedUrl } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  ArrowLeft, Upload, Trash2, Eye, EyeOff, Save, X, Loader2
+  ArrowLeft, Upload, Trash2, Eye, EyeOff, Save, Loader2
 } from "lucide-react";
 import type { Photo, Gallery } from "@/lib/types";
 
@@ -65,7 +65,7 @@ export default function EditGalleryPage({ params }: { params: Promise<{ id: stri
     load();
   }, [id, router]);
 
-  async function uploadFiles(files: FileList | File[]) {
+  const uploadFiles = useCallback(async (files: FileList | File[]) => {
     const arr = Array.from(files).filter((f) => f.type.startsWith("image/"));
     if (!arr.length) return;
 
@@ -105,7 +105,7 @@ export default function EditGalleryPage({ params }: { params: Promise<{ id: stri
       }
     }
     setTimeout(() => setUploading((prev) => prev.filter((u) => !u.done)), 2500);
-  }
+  }, [id]);
 
   const onDrop = useCallback(
     (e: React.DragEvent) => {
@@ -113,7 +113,7 @@ export default function EditGalleryPage({ params }: { params: Promise<{ id: stri
       setDragging(false);
       uploadFiles(e.dataTransfer.files);
     },
-    [id]
+    [uploadFiles]
   );
 
   async function deletePhoto(photoId: string) {

@@ -2,12 +2,26 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import GalleryCard from "@/components/gallery/GalleryCard";
-import { Globe, Instagram, Images } from "lucide-react";
+import { Globe, AtSign, Images } from "lucide-react";
 import type { Gallery } from "@/lib/types";
 
 interface Props { params: { slug: string } }
 
-async function getPhotographer(slug: string) {
+interface PhotographerProfile {
+  display_name: string | null;
+  bio: string | null;
+  website: string | null;
+  instagram: string | null;
+}
+
+interface PhotographerWithProfile {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+  photographer_profiles: PhotographerProfile | null;
+}
+
+async function getPhotographer(slug: string): Promise<PhotographerWithProfile | null> {
   const supabase = createClient();
   const { data: user } = await supabase
     .from("users")
@@ -15,13 +29,13 @@ async function getPhotographer(slug: string) {
     .eq("slug", slug)
     .eq("role", "photographer")
     .single();
-  return user;
+  return user as PhotographerWithProfile | null;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const ph = await getPhotographer(params.slug);
   if (!ph) return { title: "Фотограф не е најден" };
-  const profile = (ph as any).photographer_profiles;
+  const profile = ph.photographer_profiles;
   return {
     title: profile?.display_name ?? ph.name,
     description: profile?.bio ?? undefined,
@@ -33,7 +47,7 @@ export default async function PhotographerPage({ params }: Props) {
   if (!ph) notFound();
 
   const supabase = createClient();
-  const profile = (ph as any).photographer_profiles;
+  const profile = ph.photographer_profiles;
 
   const { data: galleries } = await supabase
     .from("galleries")
@@ -49,7 +63,7 @@ export default async function PhotographerPage({ params }: Props) {
         <div className="w-20 h-20 rounded-full bg-[#e8c97e]/10 flex items-center justify-center text-2xl font-bold text-[#e8c97e] flex-shrink-0 overflow-hidden">
           {ph.avatar_url ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={ph.avatar_url} alt={profile?.display_name} className="w-full h-full object-cover" />
+            <img src={ph.avatar_url} alt={profile?.display_name ?? ph.name} className="w-full h-full object-cover" />
           ) : (
             (profile?.display_name ?? ph.name)?.charAt(0)
           )}
@@ -70,7 +84,7 @@ export default async function PhotographerPage({ params }: Props) {
             {profile?.instagram && (
               <a href={`https://instagram.com/${profile.instagram}`} target="_blank" rel="noopener noreferrer"
                 className="flex items-center gap-1.5 text-sm text-[#888] hover:text-[#e8c97e] transition-colors">
-                <Instagram size={14} /> @{profile.instagram}
+                <AtSign size={14} /> {profile.instagram}
               </a>
             )}
             <span className="flex items-center gap-1.5 text-sm text-[#888]">
