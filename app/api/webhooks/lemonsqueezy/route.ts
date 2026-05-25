@@ -198,14 +198,25 @@ export async function POST(req: NextRequest) {
       const { Resend } = await import("resend");
       const resend = new Resend(resendKey);
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://photonia-new.vercel.app";
+      // Use Resend's default sender until photonia.mk is verified in Resend → Domains
+      const fromAddress = process.env.RESEND_FROM ?? "Photonia <onboarding@resend.dev>";
       await resend.emails.send({
-        from: "Photonia <noreply@photonia.mk>",
+        from: fromAddress,
         to: buyerEmail,
         subject: "Твоите фотографии се подготвени за преземање",
         html: `
-          <h2>Благодарам за нарачката!</h2>
-          <p>Твоите фотографии се подготвени. Оди на <a href="${siteUrl}/account/downloads">Мои преземања</a> за да ги преземеш.</p>
-          <p>Линковите за преземање важат 48 часа и можат да се употребат максимум 3 пати.</p>
+          <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px;">
+            <h2 style="color:#e8c97e;">Благодарам за нарачката! 🎉</h2>
+            <p>Твоите фотографии се подготвени за преземање.</p>
+            <p style="margin:24px 0;">
+              <a href="${siteUrl}/account/downloads"
+                 style="display:inline-block;background:#e8c97e;color:#0a0a0a;font-weight:bold;padding:12px 24px;border-radius:8px;text-decoration:none;">
+                Оди на Мои преземања
+              </a>
+            </p>
+            <p style="color:#666;font-size:13px;">Линковите за преземање важат <strong>48 часа</strong> и можат да се употребат <strong>максимум 3 пати</strong>.</p>
+            <p style="color:#999;font-size:12px;margin-top:32px;">Photonia — Македонски Фото Пазар</p>
+          </div>
         `,
       });
     } catch (err) {
