@@ -34,8 +34,18 @@ export async function POST(req: NextRequest) {
   const lsOrderId: string = String(payload.data?.id ?? "");
   const total: number = (attributes.total ?? 0) / 100;
 
-  const photoIds: string[] = meta.photo_ids ?? [];
-  const licenses: string[] = meta.licenses ?? [];
+  // Custom fields come back as strings from LS — split back into arrays.
+  // Tolerate both string (current format) and array (legacy) shapes.
+  const photoIds: string[] = Array.isArray(meta.photo_ids)
+    ? meta.photo_ids
+    : typeof meta.photo_ids === "string"
+    ? meta.photo_ids.split(",").map((s: string) => s.trim()).filter(Boolean)
+    : [];
+  const licenses: string[] = Array.isArray(meta.licenses)
+    ? meta.licenses
+    : typeof meta.licenses === "string"
+    ? meta.licenses.split(",").map((s: string) => s.trim()).filter(Boolean)
+    : [];
 
   // Lookup buyer
   const { data: buyerUser } = await supabase

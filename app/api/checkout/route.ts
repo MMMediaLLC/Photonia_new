@@ -57,9 +57,10 @@ export async function POST(req: NextRequest) {
         checkout_data: {
           email,
           custom: {
-            photo_ids: items.map((i) => i.photoId),
-            licenses: items.map((i) => i.license),
-            buyer_email: email,
+            // LS requires custom values to be strings — join arrays with commas
+            photo_ids: items.map((i) => i.photoId).join(","),
+            licenses: items.map((i) => i.license).join(","),
+            buyer_email: email ?? "",
           },
         },
       },
