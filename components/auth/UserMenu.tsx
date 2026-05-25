@@ -12,7 +12,6 @@ import {
   ShoppingBag,
   LogOut,
   LogIn,
-  UserPlus,
   ChevronDown,
 } from "lucide-react";
 
