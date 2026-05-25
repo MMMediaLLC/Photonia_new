@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   User as UserIcon,
@@ -24,7 +23,6 @@ function homeForRole(role: Role): string {
 }
 
 export default function UserMenu() {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState<string | null>(null);
   const [role, setRole] = useState<Role>(null);
@@ -69,13 +67,18 @@ export default function UserMenu() {
   }, [open]);
 
   async function handleLogout() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
     setOpen(false);
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut({ scope: "global" });
+      await fetch("/api/auth/signout", { method: "POST" });
+    } catch {
+      // ignore
+    }
     setEmail(null);
     setRole(null);
-    router.push("/");
-    router.refresh();
+    // Hard navigation — kills any cached SSR state
+    window.location.href = "/";
   }
 
   // Not logged in: clicking the icon goes to login

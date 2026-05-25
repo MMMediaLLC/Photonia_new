@@ -1,7 +1,6 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { useState } from "react";
 
@@ -12,15 +11,21 @@ interface Props {
 }
 
 export default function LogoutButton({ className, iconSize = 14, showLabel = true }: Props) {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   async function handleLogout() {
     setLoading(true);
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/");
-    router.refresh();
+    try {
+      // Clear client-side session
+      const supabase = createClient();
+      await supabase.auth.signOut({ scope: "global" });
+      // Clear server-side cookies
+      await fetch("/api/auth/signout", { method: "POST" });
+    } catch {
+      // ignore
+    }
+    // Hard navigation — kills any cached SSR state
+    window.location.href = "/";
   }
 
   return (
