@@ -71,8 +71,14 @@ const supabaseReady =
   process.env.NEXT_PUBLIC_SUPABASE_URL?.startsWith("http") &&
   (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.length ?? 0) > 10;
 
-async function enrichGalleries(galleries: { id: string; cover_photo_id: string | null; photographer_id: string }[]) {
-  if (!galleries.length) return [] as Gallery[];
+type RawGallery = Record<string, unknown> & {
+  id: string;
+  cover_photo_id: string | null;
+  photographer_id: string;
+};
+
+async function enrichGalleries(galleries: RawGallery[]): Promise<Gallery[]> {
+  if (!galleries.length) return [];
   const supabase = createClient();
   const coverIds = galleries.map((g) => g.cover_photo_id).filter(Boolean) as string[];
   const photographerIds = galleries.map((g) => g.photographer_id);
@@ -90,7 +96,7 @@ async function enrichGalleries(galleries: { id: string; cover_photo_id: string |
     ...g,
     cover_photo: covers?.find((c) => c.id === g.cover_photo_id) ?? null,
     photographer_profiles: profiles?.find((p) => p.user_id === g.photographer_id) ?? null,
-  })) as Gallery[];
+  })) as unknown as Gallery[];
 }
 
 async function getFeaturedGalleries(): Promise<Gallery[]> {

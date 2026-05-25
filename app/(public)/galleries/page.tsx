@@ -49,7 +49,7 @@ export default async function GalleriesPage({ searchParams }: Props) {
     ...g,
     cover_photo: covers?.find((c) => c.id === g.cover_photo_id) ?? null,
     photographer_profiles: profiles?.find((p) => p.user_id === g.photographer_id) ?? null,
-  })) as Gallery[];
+  })) as unknown as Gallery[];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
