@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const { items, buyerEmail } = body as {
     items: { photoId: string; license: string; price: number }[];
-    buyerEmail: string;
+    buyerEmail?: string;
   };
 
   if (!items?.length) {
@@ -18,31 +18,33 @@ export async function POST(req: NextRequest) {
   const email = user?.email ?? buyerEmail;
   const storeId = process.env.LEMONSQUEEZY_STORE_ID;
   const apiKey = process.env.LEMONSQUEEZY_API_KEY;
-
-  if (!storeId || !apiKey) {
-    return NextResponse.json({ error: "Payment not configured" }, { status: 500 });
-  }
-
-  // Get a variant ID from env (one product handles all photos via custom data)
   const variantId = process.env.LEMONSQUEEZY_VARIANT_ID;
-  if (!variantId) {
-    return NextResponse.json({ error: "LS variant not configured" }, { status: 500 });
+
+  if (!storeId || !apiKey || !variantId) {
+    return NextResponse.json(
+      { error: "Payment not configured: missing LS env vars" },
+      { status: 500 }
+    );
   }
 
   const total = items.reduce((s, i) => s + i.price, 0);
-  // LemonSqueezy expects custom_price in the smallest currency unit (cents/deni)
-  // 1 MKD = 100 deni, so 1500 MKD → 150000
+  // LemonSqueezy expects custom_price in the smallest currency unit
+  // 1 MKD = 100 deni → 500 MKD becomes 50000
   const totalInCents = Math.round(total * 100);
 
+  // LemonSqueezy JSON:API format — store/variant go in `relationships`, not `attributes`
   const payload = {
     data: {
       type: "checkouts",
       attributes: {
-        store_id: Number(storeId),
-        variant_id: Number(variantId),
         custom_price: totalInCents,
         product_options: {
           enabled_variants: [Number(variantId)],
+          redirect_url: `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/checkout/success`,
+        },
+        checkout_options: {
+          button_color: "#e8c97e",
+          embed: false,
         },
         checkout_data: {
           email,
@@ -52,8 +54,13 @@ export async function POST(req: NextRequest) {
             buyer_email: email,
           },
         },
-        checkout_options: {
-          button_color: "#e8c97e",
+      },
+      relationships: {
+        store: {
+          data: { type: "stores", id: String(storeId) },
+        },
+        variant: {
+          data: { type: "variants", id: String(variantId) },
         },
       },
     },
@@ -70,10 +77,27 @@ export async function POST(req: NextRequest) {
   });
 
   const data = await res.json();
-  const checkoutUrl = data?.data?.attributes?.url;
 
+  if (!res.ok) {
+    console.error("LemonSqueezy checkout error:", JSON.stringify(data, null, 2));
+    const lsError =
+      data?.errors?.[0]?.detail ||
+      data?.errors?.[0]?.title ||
+      data?.message ||
+      "LemonSqueezy rejected the request";
+    return NextResponse.json(
+      { error: `LS: ${lsError}`, details: data },
+      { status: 500 }
+    );
+  }
+
+  const checkoutUrl = data?.data?.attributes?.url;
   if (!checkoutUrl) {
-    return NextResponse.json({ error: "Failed to create checkout" }, { status: 500 });
+    console.error("LS response had no checkout URL:", JSON.stringify(data, null, 2));
+    return NextResponse.json(
+      { error: "LS response missing checkout URL", details: data },
+      { status: 500 }
+    );
   }
 
   return NextResponse.json({ url: checkoutUrl });
