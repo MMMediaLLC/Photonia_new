@@ -2,13 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { createAdminClient } from "@/lib/supabase/server";
 import { generateToken } from "@/lib/utils";
-import { Resend } from "resend";
 
 function verifySignature(body: string, signature: string): boolean {
-  const secret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET!;
-  const hmac = crypto.createHmac("sha256", secret);
-  const digest = hmac.update(body).digest("hex");
-  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(digest));
+  const secret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET;
+  if (!secret || !signature) return false;
+  try {
+    const hmac = crypto.createHmac("sha256", secret);
+    const digest = hmac.update(body).digest("hex");
+    const sigBuf = Buffer.from(signature);
+    const digestBuf = Buffer.from(digest);
+    if (sigBuf.length !== digestBuf.length) return false;
+    return crypto.timingSafeEqual(sigBuf, digestBuf);
+  } catch {
+    return false;
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -16,43 +23,63 @@ export async function POST(req: NextRequest) {
   const signature = req.headers.get("x-signature") ?? "";
 
   if (!verifySignature(body, signature)) {
+    console.error("[LS webhook] Invalid signature");
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
-  const payload = JSON.parse(body);
-  const eventName = payload.meta?.event_name;
+  let payload: Record<string, unknown>;
+  try {
+    payload = JSON.parse(body);
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
 
+  const meta = (payload.meta as Record<string, unknown>) ?? {};
+  const eventName = meta.event_name as string | undefined;
   if (eventName !== "order_created") {
-    return NextResponse.json({ received: true });
+    return NextResponse.json({ received: true, skipped: eventName });
   }
 
   const supabase = createAdminClient();
-  const attributes = payload.data?.attributes ?? {};
-  const meta = payload.meta?.custom_data ?? {};
+  const dataObj = (payload.data as Record<string, unknown>) ?? {};
+  const attributes = (dataObj.attributes as Record<string, unknown>) ?? {};
+  const customData = (meta.custom_data as Record<string, unknown>) ?? {};
 
-  const buyerEmail: string = attributes.user_email ?? meta.buyer_email ?? "";
-  const lsOrderId: string = String(payload.data?.id ?? "");
-  const total: number = (attributes.total ?? 0) / 100;
+  const buyerEmail = String(
+    attributes.user_email ?? customData.buyer_email ?? ""
+  );
+  const lsOrderId = String(dataObj.id ?? "");
+  const total = Number(attributes.total ?? 0) / 100;
 
-  // Custom fields come back as strings from LS — split back into arrays.
-  // Tolerate both string (current format) and array (legacy) shapes.
-  const photoIds: string[] = Array.isArray(meta.photo_ids)
-    ? meta.photo_ids
-    : typeof meta.photo_ids === "string"
-    ? meta.photo_ids.split(",").map((s: string) => s.trim()).filter(Boolean)
-    : [];
-  const licenses: string[] = Array.isArray(meta.licenses)
-    ? meta.licenses
-    : typeof meta.licenses === "string"
-    ? meta.licenses.split(",").map((s: string) => s.trim()).filter(Boolean)
-    : [];
+  // Parse custom fields (always strings now, but tolerate arrays)
+  const parseList = (v: unknown): string[] => {
+    if (Array.isArray(v)) return v.map(String).filter(Boolean);
+    if (typeof v === "string") return v.split(",").map((s) => s.trim()).filter(Boolean);
+    return [];
+  };
+  const photoIds = parseList(customData.photo_ids);
+  const licenses = parseList(customData.licenses);
 
-  // Lookup buyer
+  console.log("[LS webhook]", { lsOrderId, buyerEmail, total, photoIds, licenses });
+
+  // Idempotency — if we've already processed this LS order, return OK
+  const { data: existing } = await supabase
+    .from("orders")
+    .select("id")
+    .eq("ls_order_id", lsOrderId)
+    .maybeSingle();
+
+  if (existing) {
+    console.log("[LS webhook] Order already processed:", lsOrderId);
+    return NextResponse.json({ received: true, duplicate: true });
+  }
+
+  // Lookup buyer (optional — may not have account)
   const { data: buyerUser } = await supabase
     .from("users")
     .select("id")
     .eq("email", buyerEmail)
-    .single();
+    .maybeSingle();
 
   // Create order
   const { data: order, error: orderError } = await supabase
@@ -68,63 +95,129 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (orderError || !order) {
-    console.error("Order creation failed", orderError);
-    return NextResponse.json({ error: "Order creation failed" }, { status: 500 });
+    console.error("[LS webhook] Order insert failed:", orderError);
+    return NextResponse.json(
+      { error: "Order creation failed", details: orderError?.message },
+      { status: 500 }
+    );
   }
 
-  // Create order items
-  for (let i = 0; i < photoIds.length; i++) {
-    const photoId = photoIds[i];
-    const license = licenses[i] ?? "personal";
+  // Fetch photos + their galleries in batch (no embedded profiles join!)
+  let photos: Array<{
+    id: string;
+    gallery_id: string;
+    price_personal: number;
+    price_commercial: number;
+    price_extended: number;
+  }> = [];
 
-    const { data: photo } = await supabase
+  if (photoIds.length) {
+    const { data, error } = await supabase
       .from("photos")
-      .select("*, galleries(photographer_id, photographer_profiles(commission_rate))")
-      .eq("id", photoId)
-      .single();
-
-    if (!photo) continue;
-
-    const price =
-      license === "commercial"
-        ? photo.price_commercial
-        : license === "extended"
-        ? photo.price_extended
-        : photo.price_personal;
-
-    const photoData = photo as typeof photo & {
-      galleries?: { photographer_profiles?: { commission_rate?: number } };
-    };
-    const commissionRate =
-      photoData.galleries?.photographer_profiles?.commission_rate ?? 0.8;
-    const photographerAmount = price * commissionRate;
-    const platformAmount = price - photographerAmount;
-
-    await supabase.from("order_items").insert({
-      order_id: order.id,
-      photo_id: photoId,
-      license,
-      price,
-      photographer_amount: photographerAmount,
-      platform_amount: platformAmount,
-      download_token: generateToken(48),
-      download_expires_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
-    });
+      .select("id, gallery_id, price_personal, price_commercial, price_extended")
+      .in("id", photoIds);
+    if (error) {
+      console.error("[LS webhook] Photos fetch failed:", error);
+    }
+    photos = data ?? [];
   }
 
-  // Send buyer email
-  const resend = new Resend(process.env.RESEND_API_KEY);
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-  await resend.emails.send({
-    from: "Photonia <noreply@photonia.mk>",
-    to: buyerEmail,
-    subject: "Твоите фотографии се подготвени за преземање",
-    html: `
-      <h2>Благодарам за нарачката!</h2>
-      <p>Твоите фотографии се подготвени. Оди на <a href="${siteUrl}/account/downloads">Мои преземања</a> за да ги преземеш.</p>
-      <p>Линковите за преземање важат 48 часа и можат да се употребат максимум 3 пати.</p>
-    `,
-  });
+  // Fetch gallery → photographer mapping
+  const galleryIds = [...new Set(photos.map((p) => p.gallery_id))];
+  const { data: galleries } = galleryIds.length
+    ? await supabase
+        .from("galleries")
+        .select("id, photographer_id")
+        .in("id", galleryIds)
+    : { data: [] as { id: string; photographer_id: string }[] };
 
-  return NextResponse.json({ received: true });
+  // Fetch commission rates per photographer (separate query — no embed)
+  const photographerIds = [...new Set((galleries ?? []).map((g) => g.photographer_id))];
+  const { data: profiles } = photographerIds.length
+    ? await supabase
+        .from("photographer_profiles")
+        .select("user_id, commission_rate")
+        .in("user_id", photographerIds)
+    : { data: [] as { user_id: string; commission_rate: number }[] };
+
+  function commissionForPhoto(photoId: string): number {
+    const photo = photos.find((p) => p.id === photoId);
+    if (!photo) return 0.8;
+    const gallery = (galleries ?? []).find((g) => g.id === photo.gallery_id);
+    if (!gallery) return 0.8;
+    const profile = (profiles ?? []).find((p) => p.user_id === gallery.photographer_id);
+    return profile?.commission_rate ?? 0.8;
+  }
+
+  // Build order_items
+  const items = photoIds
+    .map((photoId, i) => {
+      const photo = photos.find((p) => p.id === photoId);
+      if (!photo) return null;
+      const license = licenses[i] ?? "personal";
+      const price =
+        license === "commercial"
+          ? photo.price_commercial
+          : license === "extended"
+          ? photo.price_extended
+          : photo.price_personal;
+      const rate = commissionForPhoto(photoId);
+      const photographerAmount = price * rate;
+      const platformAmount = price - photographerAmount;
+      return {
+        order_id: order.id,
+        photo_id: photoId,
+        license,
+        price,
+        photographer_amount: photographerAmount,
+        platform_amount: platformAmount,
+        download_token: generateToken(48),
+        download_expires_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
+      };
+    })
+    .filter(Boolean);
+
+  if (items.length) {
+    const { error: itemsError } = await supabase.from("order_items").insert(items);
+    if (itemsError) {
+      console.error("[LS webhook] order_items insert failed:", itemsError);
+      return NextResponse.json(
+        { error: "Items insert failed", details: itemsError.message },
+        { status: 500 }
+      );
+    }
+    console.log(`[LS webhook] Created ${items.length} order_items for order ${order.id}`);
+  } else {
+    console.warn("[LS webhook] No items to create for order", order.id);
+  }
+
+  // Send buyer email — only if Resend is configured. Best-effort, never fail webhook.
+  const resendKey = process.env.RESEND_API_KEY;
+  if (resendKey && resendKey !== "your_resend_api_key" && buyerEmail) {
+    try {
+      const { Resend } = await import("resend");
+      const resend = new Resend(resendKey);
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://photonia-new.vercel.app";
+      await resend.emails.send({
+        from: "Photonia <noreply@photonia.mk>",
+        to: buyerEmail,
+        subject: "Твоите фотографии се подготвени за преземање",
+        html: `
+          <h2>Благодарам за нарачката!</h2>
+          <p>Твоите фотографии се подготвени. Оди на <a href="${siteUrl}/account/downloads">Мои преземања</a> за да ги преземеш.</p>
+          <p>Линковите за преземање важат 48 часа и можат да се употребат максимум 3 пати.</p>
+        `,
+      });
+    } catch (err) {
+      console.error("[LS webhook] Email send failed (non-fatal):", err);
+    }
+  } else {
+    console.log("[LS webhook] Resend not configured, skipping email");
+  }
+
+  return NextResponse.json({
+    received: true,
+    order_id: order.id,
+    items: items.length,
+  });
 }
