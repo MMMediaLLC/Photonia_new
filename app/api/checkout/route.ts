@@ -30,6 +30,9 @@ export async function POST(req: NextRequest) {
   }
 
   const total = items.reduce((s, i) => s + i.price, 0);
+  // LemonSqueezy expects custom_price in the smallest currency unit (cents/deni)
+  // 1 MKD = 100 deni, so 1500 MKD → 150000
+  const totalInCents = Math.round(total * 100);
 
   const payload = {
     data: {
@@ -37,7 +40,7 @@ export async function POST(req: NextRequest) {
       attributes: {
         store_id: Number(storeId),
         variant_id: Number(variantId),
-        custom_price: total,
+        custom_price: totalInCents,
         product_options: {
           enabled_variants: [Number(variantId)],
         },
