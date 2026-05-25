@@ -19,9 +19,7 @@ export default async function GalleriesPage({ searchParams }: Props) {
 
   let query = supabase
     .from("galleries")
-    .select(
-      `*, photographer_profiles(display_name, user_id), cover_photo:photos!galleries_cover_photo_id_fkey(id, cloudinary_public_id, width, height)`
-    )
+    .select("*")
     .eq("is_public", true)
     .order("created_at", { ascending: false });
 
@@ -33,6 +31,25 @@ export default async function GalleriesPage({ searchParams }: Props) {
   }
 
   const { data: galleries } = await query;
+
+  // Enrich with cover photos + photographer profiles
+  const coverIds = (galleries ?? []).map((g) => g.cover_photo_id).filter(Boolean) as string[];
+  const photographerIds = (galleries ?? []).map((g) => g.photographer_id);
+
+  const [{ data: covers }, { data: profiles }] = await Promise.all([
+    coverIds.length
+      ? supabase.from("photos").select("id, cloudinary_public_id, width, height").in("id", coverIds)
+      : Promise.resolve({ data: [] as { id: string; cloudinary_public_id: string; width: number; height: number }[] }),
+    photographerIds.length
+      ? supabase.from("photographer_profiles").select("user_id, display_name").in("user_id", photographerIds)
+      : Promise.resolve({ data: [] as { user_id: string; display_name: string }[] }),
+  ]);
+
+  const enriched: Gallery[] = (galleries ?? []).map((g) => ({
+    ...g,
+    cover_photo: covers?.find((c) => c.id === g.cover_photo_id) ?? null,
+    photographer_profiles: profiles?.find((p) => p.user_id === g.photographer_id) ?? null,
+  })) as Gallery[];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
@@ -69,12 +86,12 @@ export default async function GalleriesPage({ searchParams }: Props) {
 
       {/* Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {(galleries as Gallery[])?.map((g) => (
+        {enriched.map((g) => (
           <GalleryCard key={g.id} gallery={g} />
         ))}
       </div>
 
-      {(!galleries || galleries.length === 0) && (
+      {enriched.length === 0 && (
         <p className="text-center text-[#888] py-24">Нема галерии за избраниот филтер.</p>
       )}
     </div>

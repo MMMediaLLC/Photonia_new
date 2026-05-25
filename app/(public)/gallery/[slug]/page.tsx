@@ -10,45 +10,70 @@ interface Props {
   params: { slug: string };
 }
 
-async function getGallery(slug: string) {
+async function getGalleryData(slug: string) {
   const supabase = createClient();
-  const { data } = await supabase
+
+  const { data: gallery } = await supabase
     .from("galleries")
-    .select(
-      `*, photographer_profiles(display_name, user_id, instagram, website), photos(*, gallery:galleries(slug))`
-    )
+    .select("*")
     .eq("slug", slug)
     .eq("is_public", true)
     .single();
-  return data as Gallery | null;
+
+  if (!gallery) return null;
+
+  const [{ data: photos }, { data: photographerUser }, { data: photographerProfile }] =
+    await Promise.all([
+      supabase
+        .from("photos")
+        .select("*")
+        .eq("gallery_id", gallery.id)
+        .order("order_index"),
+      supabase
+        .from("users")
+        .select("id, name, slug")
+        .eq("id", gallery.photographer_id)
+        .single(),
+      supabase
+        .from("photographer_profiles")
+        .select("display_name, user_id, instagram, website")
+        .eq("user_id", gallery.photographer_id)
+        .maybeSingle(),
+    ]);
+
+  return {
+    gallery: gallery as Gallery,
+    photos: (photos as Photo[]) ?? [],
+    photographer: {
+      user_id: gallery.photographer_id,
+      slug: photographerUser?.slug ?? gallery.photographer_id,
+      display_name:
+        photographerProfile?.display_name || photographerUser?.name || "Фотограф",
+      instagram: photographerProfile?.instagram ?? null,
+      website: photographerProfile?.website ?? null,
+    },
+  };
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const gallery = await getGallery(params.slug);
-  if (!gallery) return { title: "Галерија не е најдена" };
+  const data = await getGalleryData(params.slug);
+  if (!data) return { title: "Галерија не е најдена" };
   return {
-    title: gallery.title,
-    description: gallery.description ?? undefined,
+    title: data.gallery.title,
+    description: data.gallery.description ?? undefined,
     openGraph: {
-      title: gallery.title,
-      description: gallery.description ?? undefined,
+      title: data.gallery.title,
+      description: data.gallery.description ?? undefined,
       type: "website",
     },
   };
 }
 
 export default async function GalleryPage({ params }: Props) {
-  const gallery = await getGallery(params.slug);
-  if (!gallery) notFound();
+  const data = await getGalleryData(params.slug);
+  if (!data) notFound();
 
-  const galleryData = gallery as Gallery & {
-    photographer_profiles?: { display_name: string; user_id: string; instagram?: string; website?: string };
-    photos?: (Photo & { gallery: { slug: string } })[];
-  };
-  const photographer = galleryData.photographer_profiles;
-  const photos = (galleryData.photos ?? []).sort(
-    (a, b) => a.order_index - b.order_index
-  );
+  const { gallery, photos, photographer } = data;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
@@ -67,17 +92,15 @@ export default async function GalleryPage({ params }: Props) {
         )}
 
         <div className="flex flex-wrap items-center gap-4 text-sm text-[#888]">
-          {photographer && (
-            <div className="flex items-center gap-1.5">
-              <User size={14} />
-              <Link
-                href={`/photographer/${photographer.user_id}`}
-                className="hover:text-[#e8c97e] transition-colors"
-              >
-                {photographer.display_name}
-              </Link>
-            </div>
-          )}
+          <div className="flex items-center gap-1.5">
+            <User size={14} />
+            <Link
+              href={`/photographer/${photographer.slug}`}
+              className="hover:text-[#e8c97e] transition-colors"
+            >
+              {photographer.display_name}
+            </Link>
+          </div>
           {gallery.event_date && (
             <div className="flex items-center gap-1.5">
               <Calendar size={14} />

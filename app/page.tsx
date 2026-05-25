@@ -71,19 +71,39 @@ const supabaseReady =
   process.env.NEXT_PUBLIC_SUPABASE_URL?.startsWith("http") &&
   (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.length ?? 0) > 10;
 
+async function enrichGalleries(galleries: { id: string; cover_photo_id: string | null; photographer_id: string }[]) {
+  if (!galleries.length) return [] as Gallery[];
+  const supabase = createClient();
+  const coverIds = galleries.map((g) => g.cover_photo_id).filter(Boolean) as string[];
+  const photographerIds = galleries.map((g) => g.photographer_id);
+
+  const [{ data: covers }, { data: profiles }] = await Promise.all([
+    coverIds.length
+      ? supabase.from("photos").select("id, cloudinary_public_id, width, height").in("id", coverIds)
+      : Promise.resolve({ data: [] as { id: string; cloudinary_public_id: string; width: number; height: number }[] }),
+    photographerIds.length
+      ? supabase.from("photographer_profiles").select("user_id, display_name").in("user_id", photographerIds)
+      : Promise.resolve({ data: [] as { user_id: string; display_name: string }[] }),
+  ]);
+
+  return galleries.map((g) => ({
+    ...g,
+    cover_photo: covers?.find((c) => c.id === g.cover_photo_id) ?? null,
+    photographer_profiles: profiles?.find((p) => p.user_id === g.photographer_id) ?? null,
+  })) as Gallery[];
+}
+
 async function getFeaturedGalleries(): Promise<Gallery[]> {
   if (!supabaseReady) return [];
   const supabase = createClient();
   const { data } = await supabase
     .from("galleries")
-    .select(
-      `*, photographer_profiles(display_name, user_id), cover_photo:photos!galleries_cover_photo_id_fkey(id, cloudinary_public_id, width, height)`
-    )
+    .select("*")
     .eq("is_public", true)
     .eq("is_featured", true)
     .order("created_at", { ascending: false })
     .limit(6);
-  return (data as Gallery[]) ?? [];
+  return enrichGalleries(data ?? []);
 }
 
 async function getLatestGalleries(): Promise<Gallery[]> {
@@ -91,13 +111,11 @@ async function getLatestGalleries(): Promise<Gallery[]> {
   const supabase = createClient();
   const { data } = await supabase
     .from("galleries")
-    .select(
-      `*, photographer_profiles(display_name, user_id), cover_photo:photos!galleries_cover_photo_id_fkey(id, cloudinary_public_id, width, height)`
-    )
+    .select("*")
     .eq("is_public", true)
     .order("created_at", { ascending: false })
     .limit(9);
-  return (data as Gallery[]) ?? [];
+  return enrichGalleries(data ?? []);
 }
 
 async function getFeaturedPhotographers() {
