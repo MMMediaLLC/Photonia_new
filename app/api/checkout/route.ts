@@ -32,16 +32,24 @@ export async function POST(req: NextRequest) {
   // 1 MKD = 100 deni → 500 MKD becomes 50000
   const totalInCents = Math.round(total * 100);
 
+  // Build a valid HTTPS redirect URL from the actual request origin
+  const origin = req.headers.get("origin") || req.nextUrl.origin;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || origin;
+  const isValidHttps = /^https:\/\//.test(siteUrl);
+  const redirectUrl = isValidHttps ? `${siteUrl}/checkout/success` : undefined;
+
   // LemonSqueezy JSON:API format — store/variant go in `relationships`, not `attributes`
+  const productOptions: Record<string, unknown> = {
+    enabled_variants: [Number(variantId)],
+  };
+  if (redirectUrl) productOptions.redirect_url = redirectUrl;
+
   const payload = {
     data: {
       type: "checkouts",
       attributes: {
         custom_price: totalInCents,
-        product_options: {
-          enabled_variants: [Number(variantId)],
-          redirect_url: `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/checkout/success`,
-        },
+        product_options: productOptions,
         checkout_options: {
           button_color: "#e8c97e",
           embed: false,
