@@ -55,12 +55,15 @@ export async function POST(req: NextRequest) {
           embed: false,
         },
         checkout_data: {
-          email,
+          ...(email ? { email } : {}),
           custom: {
-            // LS requires custom values to be strings — join arrays with commas
+            // LS requires every custom value to be a non-empty string.
+            // photo_ids + licenses go as comma-joined strings; buyer_email
+            // only included if we actually have it (webhook also reads
+            // attributes.user_email from LS as primary source).
             photo_ids: items.map((i) => i.photoId).join(","),
             licenses: items.map((i) => i.license).join(","),
-            buyer_email: email ?? "",
+            ...(email ? { buyer_email: email } : {}),
           },
         },
       },
