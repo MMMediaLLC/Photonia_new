@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LayoutDashboard, Images, ShoppingBag, CreditCard, User, ArrowLeft } from "lucide-react";
+import LogoutButton from "@/components/auth/LogoutButton";
 
 const navItems = [
   { href: "/dashboard", label: "Преглед", icon: LayoutDashboard },
@@ -32,12 +33,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           ))}
         </nav>
 
-        <Link
-          href="/"
-          className="flex items-center gap-2 text-xs text-[#888] hover:text-[#f0f0f0] transition-colors mt-4"
-        >
-          <ArrowLeft size={12} /> Назад на сајтот
-        </Link>
+        <div className="mt-4 pt-4 border-t border-white/[0.06] flex flex-col gap-2">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-xs text-[#888] hover:text-[#f0f0f0] transition-colors"
+          >
+            <ArrowLeft size={12} /> Назад на сајтот
+          </Link>
+          <LogoutButton
+            className="flex items-center gap-2 text-xs text-[#e05555] hover:text-[#ff7777] transition-colors w-full text-left"
+            iconSize={12}
+          />
+        </div>
       </aside>
 
       {/* Main */}

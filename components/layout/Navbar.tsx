@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useCart } from "@/components/cart/CartProvider";
-import { ShoppingCart, User, Menu, X } from "lucide-react";
+import { ShoppingCart, Menu, X } from "lucide-react";
 import { useState } from "react";
 import CartDrawer from "@/components/cart/CartDrawer";
+import UserMenu from "@/components/auth/UserMenu";
 
 export default function Navbar() {
   const { items, openCart } = useCart();
@@ -44,13 +45,7 @@ export default function Navbar() {
               )}
             </button>
 
-            <Link
-              href="/account/downloads"
-              className="p-2 rounded-lg hover:bg-white/5 transition-colors"
-              aria-label="Профил"
-            >
-              <User size={20} className="text-[#f0f0f0]" />
-            </Link>
+            <UserMenu />
 
             <button
               className="md:hidden p-2 rounded-lg hover:bg-white/5 transition-colors"
@@ -69,9 +64,6 @@ export default function Navbar() {
             </Link>
             <Link href="/search" onClick={() => setMenuOpen(false)} className="text-[#f0f0f0]">
               Пребарај
-            </Link>
-            <Link href="/login" onClick={() => setMenuOpen(false)} className="text-[#888]">
-              Најава
             </Link>
           </div>
         )}
