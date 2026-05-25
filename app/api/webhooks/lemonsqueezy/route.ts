@@ -62,16 +62,9 @@ export async function POST(req: NextRequest) {
 
   console.log("[LS webhook]", { lsOrderId, buyerEmail, total, photoIds, licenses });
 
-  // Idempotency — if we've already processed this LS order, return OK
-  const { data: existing } = await supabase
-    .from("orders")
-    .select("id")
-    .eq("ls_order_id", lsOrderId)
-    .maybeSingle();
-
-  if (existing) {
-    console.log("[LS webhook] Order already processed:", lsOrderId);
-    return NextResponse.json({ received: true, duplicate: true });
+  // Warn loudly if service role key is missing — RLS will hide existing orders
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.warn("[LS webhook] SUPABASE_SERVICE_ROLE_KEY not set — admin client falls back to anon key, RLS may block reads");
   }
 
   // Lookup buyer (optional — may not have account)
@@ -81,25 +74,58 @@ export async function POST(req: NextRequest) {
     .eq("email", buyerEmail)
     .maybeSingle();
 
-  // Create order
-  const { data: order, error: orderError } = await supabase
-    .from("orders")
-    .insert({
-      buyer_id: buyerUser?.id ?? null,
-      buyer_email: buyerEmail,
-      ls_order_id: lsOrderId,
-      status: "paid",
-      total,
-    })
-    .select()
-    .single();
+  // Try to upsert order. If ls_order_id already exists, fetch the existing row.
+  let order: { id: string } | null = null;
+  {
+    const { data, error } = await supabase
+      .from("orders")
+      .insert({
+        buyer_id: buyerUser?.id ?? null,
+        buyer_email: buyerEmail,
+        ls_order_id: lsOrderId,
+        status: "paid",
+        total,
+      })
+      .select("id")
+      .single();
 
-  if (orderError || !order) {
-    console.error("[LS webhook] Order insert failed:", orderError);
-    return NextResponse.json(
-      { error: "Order creation failed", details: orderError?.message },
-      { status: 500 }
-    );
+    if (data) {
+      order = data;
+    } else if (error) {
+      // Duplicate (23505) is fine — fetch the existing order
+      if (error.code === "23505") {
+        console.log("[LS webhook] Order already exists, fetching:", lsOrderId);
+        const { data: existing } = await supabase
+          .from("orders")
+          .select("id")
+          .eq("ls_order_id", lsOrderId)
+          .maybeSingle();
+        order = existing;
+      } else {
+        console.error("[LS webhook] Order insert failed:", error);
+        return NextResponse.json(
+          { error: "Order creation failed", details: error.message, code: error.code },
+          { status: 500 }
+        );
+      }
+    }
+  }
+
+  if (!order) {
+    console.error("[LS webhook] Could not insert or fetch order:", lsOrderId);
+    return NextResponse.json({ error: "Order not available" }, { status: 500 });
+  }
+
+  // Check if items already exist (idempotent on retry)
+  const { data: existingItems } = await supabase
+    .from("order_items")
+    .select("id")
+    .eq("order_id", order.id)
+    .limit(1);
+
+  if (existingItems && existingItems.length > 0) {
+    console.log("[LS webhook] Items already created for order, skipping:", order.id);
+    return NextResponse.json({ received: true, duplicate: true, order_id: order.id });
   }
 
   // Fetch photos + their galleries in batch (no embedded profiles join!)
