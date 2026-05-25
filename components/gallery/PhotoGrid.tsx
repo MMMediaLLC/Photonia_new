@@ -142,14 +142,14 @@ export default function PhotoGrid({ photos, gallery }: Props) {
       {/* Lightbox */}
       {lightboxPhoto && lightboxIndex !== null && (
         <div
-          className="fixed inset-0 bg-black/95 z-50 flex flex-col"
+          className="fixed inset-0 bg-black/95 z-50 flex flex-col landscape:max-md:block"
           onClick={closeLightbox}
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
         >
-          {/* Top bar */}
+          {/* Top bar — flows in portrait/desktop, overlays in landscape mobile */}
           <div
-            className="flex items-center justify-between px-4 sm:px-6 py-4 text-white/80"
+            className="flex items-center justify-between px-4 sm:px-6 py-4 text-white/80 landscape:max-md:absolute landscape:max-md:top-0 landscape:max-md:left-0 landscape:max-md:right-0 landscape:max-md:z-10 landscape:max-md:bg-gradient-to-b landscape:max-md:from-black/70 landscape:max-md:to-transparent landscape:max-md:py-2"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3">
@@ -171,9 +171,9 @@ export default function PhotoGrid({ photos, gallery }: Props) {
             </button>
           </div>
 
-          {/* Image area */}
+          {/* Image area — fills viewport in landscape mobile */}
           <div
-            className="flex-1 relative flex items-center justify-center px-2 sm:px-12"
+            className="flex-1 relative flex items-center justify-center px-2 sm:px-12 landscape:max-md:absolute landscape:max-md:inset-0 landscape:max-md:px-0"
             onClick={(e) => e.stopPropagation()}
           >
             <Image
@@ -191,14 +191,14 @@ export default function PhotoGrid({ photos, gallery }: Props) {
               <>
                 <button
                   onClick={(e) => { e.stopPropagation(); goPrev(); }}
-                  className="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 p-3 bg-black/40 hover:bg-black/60 rounded-full text-white transition-colors"
+                  className="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 p-3 bg-black/40 hover:bg-black/60 rounded-full text-white transition-colors z-10"
                   aria-label="Претходна"
                 >
                   <ChevronLeft size={24} />
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); goNext(); }}
-                  className="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 p-3 bg-black/40 hover:bg-black/60 rounded-full text-white transition-colors"
+                  className="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 p-3 bg-black/40 hover:bg-black/60 rounded-full text-white transition-colors z-10"
                   aria-label="Следна"
                 >
                   <ChevronRight size={24} />
@@ -207,20 +207,20 @@ export default function PhotoGrid({ photos, gallery }: Props) {
             )}
           </div>
 
-          {/* Bottom: license selector + buy */}
+          {/* Bottom: license selector + buy — overlays in landscape mobile */}
           <div
-            className="px-4 sm:px-6 py-4 bg-gradient-to-t from-black/80 to-transparent"
+            className="px-4 sm:px-6 py-4 bg-gradient-to-t from-black/80 to-transparent landscape:max-md:absolute landscape:max-md:bottom-0 landscape:max-md:left-0 landscape:max-md:right-0 landscape:max-md:z-10 landscape:max-md:py-2"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-3 landscape:max-md:flex-row landscape:max-md:gap-2">
               {/* License pills */}
-              <div className="flex gap-2 flex-1 overflow-x-auto pb-1">
+              <div className="flex gap-2 flex-1 overflow-x-auto pb-1 landscape:max-md:pb-0">
                 {(["personal", "commercial", "extended"] as const).map((lic) => (
                   <button
                     key={lic}
                     onClick={() => setSelectedLicense(lic)}
                     className={cn(
-                      "flex-1 min-w-[110px] px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors border whitespace-nowrap",
+                      "flex-1 min-w-[110px] px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors border whitespace-nowrap landscape:max-md:min-w-[90px] landscape:max-md:py-1",
                       selectedLicense === lic
                         ? "bg-[#e8c97e]/15 border-[#e8c97e] text-[#e8c97e]"
                         : "bg-white/[0.04] border-white/[0.08] text-white/70 hover:bg-white/[0.08]"
@@ -243,16 +243,16 @@ export default function PhotoGrid({ photos, gallery }: Props) {
                 }}
                 disabled={lightboxInCart}
                 className={cn(
-                  "flex items-center justify-center gap-2 px-5 py-3 rounded-card text-sm font-semibold transition-colors flex-shrink-0",
+                  "flex items-center justify-center gap-2 px-5 py-3 rounded-card text-sm font-semibold transition-colors flex-shrink-0 landscape:max-md:px-3 landscape:max-md:py-2",
                   lightboxInCart
                     ? "bg-[#4caf7d]/20 text-[#4caf7d] cursor-default"
                     : "bg-[#e8c97e] text-[#0a0a0a] hover:bg-[#d4b46a]"
                 )}
               >
                 {lightboxInCart ? (
-                  <><Check size={16} /> Веќе во кошничка</>
+                  <><Check size={16} /> <span className="landscape:max-md:hidden">Веќе во кошничка</span></>
                 ) : (
-                  <><ShoppingCart size={16} /> Додај — {formatPrice(priceForLicense(lightboxPhoto, selectedLicense))}</>
+                  <><ShoppingCart size={16} /> <span className="landscape:max-md:hidden">Додај — </span>{formatPrice(priceForLicense(lightboxPhoto, selectedLicense))}</>
                 )}
               </button>
             </div>
