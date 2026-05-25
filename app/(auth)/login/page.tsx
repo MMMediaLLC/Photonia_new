@@ -16,14 +16,29 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       toast(error.message, "error");
-    } else {
-      router.refresh();
-      router.push("/");
+      setLoading(false);
+      return;
     }
-    setLoading(false);
+
+    // Role-based redirect
+    let destination = "/";
+    if (data.user) {
+      const { data: profile } = await supabase
+        .from("users")
+        .select("role")
+        .eq("id", data.user.id)
+        .single();
+
+      if (profile?.role === "admin") destination = "/admin";
+      else if (profile?.role === "photographer") destination = "/dashboard";
+      else destination = "/account/downloads";
+    }
+
+    router.refresh();
+    router.push(destination);
   }
 
   return (
