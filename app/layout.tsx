@@ -1,7 +1,15 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { Toaster } from "@/components/ui/Toaster";
+
+const inter = Inter({
+  subsets: ["latin", "cyrillic", "cyrillic-ext"],
+  weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-inter",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -24,8 +32,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="mk">
-      <body className="antialiased">
+    <html lang="mk" className={inter.variable}>
+      <body className="antialiased font-sans">
         <CartProvider>
           {children}
           <Toaster />
