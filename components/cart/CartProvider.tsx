@@ -12,7 +12,7 @@ import type { CartItem, LicenseType, Photo, Gallery } from "@/lib/types";
 
 interface CartContextType {
   items: CartItem[];
-  addItem: (photo: Photo, gallery?: Gallery) => void;
+  addItem: (photo: Photo, gallery?: Gallery, license?: LicenseType) => void;
   removeItem: (photoId: string) => void;
   updateLicense: (photoId: string, license: LicenseType) => void;
   clearCart: () => void;
@@ -49,10 +49,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [items, hydrated]);
 
-  const addItem = useCallback((photo: Photo, gallery?: Gallery) => {
+  const addItem = useCallback((photo: Photo, gallery?: Gallery, license: LicenseType = "personal") => {
     setItems((prev) => {
       if (prev.some((i) => i.photo.id === photo.id)) return prev;
-      return [...prev, { photo, license: "personal", gallery }];
+      return [...prev, { photo, license, gallery }];
     });
     setIsOpen(true);
   }, []);
