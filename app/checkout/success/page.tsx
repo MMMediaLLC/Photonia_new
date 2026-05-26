@@ -11,39 +11,10 @@ export default function CheckoutSuccessPage() {
 
         <h1 className="text-3xl font-bold mb-3">Плаќањето е успешно!</h1>
         <p className="text-[#888] mb-8 leading-relaxed">
-          Благодариме на купувањето. Сликите се <strong className="text-[#f0f0f0]">подготвени во HD без watermark</strong>.
-          На твојот email испративме <strong className="text-[#f0f0f0]">магичен линк</strong> за веднаш да ги симнеш.
+          Благодариме на купувањето. Сликите се{" "}
+          <strong className="text-[#f0f0f0]">достапни веднаш</strong>{" "}
+          во твојот профил, HD без watermark.
         </p>
-
-        <div className="bg-[#141414] border border-white/[0.08] rounded-card p-5 mb-8 text-left">
-          <p className="text-sm text-[#f0f0f0] font-medium mb-3">📧 Што следно?</p>
-          <div className="flex flex-col gap-3">
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full bg-[#e8c97e]/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <span className="text-[#e8c97e] text-xs font-bold">1</span>
-              </div>
-              <p className="text-sm text-[#888]">
-                Отвори го email-от од Photonia (провери ja и Spam папката)
-              </p>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full bg-[#e8c97e]/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <span className="text-[#e8c97e] text-xs font-bold">2</span>
-              </div>
-              <p className="text-sm text-[#888]">
-                Кликни на копчето „🔑 Најави се и преземи&ldquo; — автоматски си логиран
-              </p>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full bg-[#e8c97e]/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <span className="text-[#e8c97e] text-xs font-bold">3</span>
-              </div>
-              <p className="text-sm text-[#888]">
-                Преземи ja HD сликата (важност: 48 часа, до 3 преземања)
-              </p>
-            </div>
-          </div>
-        </div>
 
         <div className="flex flex-col sm:flex-row gap-3">
           <Link
@@ -51,7 +22,7 @@ export default function CheckoutSuccessPage() {
             className="flex-1 flex items-center justify-center gap-2 bg-[#e8c97e] text-[#0a0a0a] font-semibold py-3 rounded-card hover:bg-[#d4b46a] transition-colors"
           >
             <Download size={16} />
-            Мои преземања
+            Преземи сега
           </Link>
           <Link
             href="/galleries"

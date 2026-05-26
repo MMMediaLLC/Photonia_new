@@ -6,16 +6,20 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   const body = await req.json();
-  const { items, buyerEmail } = body as {
+  const { items } = body as {
     items: { photoId: string; license: string; price: number }[];
-    buyerEmail?: string;
   };
 
   if (!items?.length) {
     return NextResponse.json({ error: "Empty cart" }, { status: 400 });
   }
 
-  const email = user?.email ?? buyerEmail;
+  // Auth is required — no guest checkout
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized — please log in first" }, { status: 401 });
+  }
+
+  const email = user.email;
   const storeId = process.env.LEMONSQUEEZY_STORE_ID;
   const apiKey = process.env.LEMONSQUEEZY_API_KEY;
   const variantId = process.env.LEMONSQUEEZY_VARIANT_ID;
@@ -55,15 +59,13 @@ export async function POST(req: NextRequest) {
           embed: false,
         },
         checkout_data: {
-          ...(email ? { email } : {}),
+          email,
           custom: {
             // LS requires every custom value to be a non-empty string.
-            // photo_ids + licenses go as comma-joined strings; buyer_email
-            // only included if we actually have it (webhook also reads
-            // attributes.user_email from LS as primary source).
+            user_id: user.id,
             photo_ids: items.map((i) => i.photoId).join(","),
             licenses: items.map((i) => i.license).join(","),
-            ...(email ? { buyer_email: email } : {}),
+            buyer_email: email ?? "",
           },
         },
       },

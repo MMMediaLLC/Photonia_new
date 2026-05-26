@@ -45,13 +45,13 @@ export async function POST(req: NextRequest) {
   const attributes = (dataObj.attributes as Record<string, unknown>) ?? {};
   const customData = (meta.custom_data as Record<string, unknown>) ?? {};
 
-  const buyerEmail = String(
-    attributes.user_email ?? customData.buyer_email ?? ""
-  );
+  const buyerEmail = String(attributes.user_email ?? customData.buyer_email ?? "");
   const lsOrderId = String(dataObj.id ?? "");
   const total = Number(attributes.total ?? 0) / 100;
 
-  // Parse custom fields (always strings now, but tolerate arrays)
+  // user_id is passed from /api/checkout — buyer was logged in at checkout
+  const userId = customData.user_id as string | undefined;
+
   const parseList = (v: unknown): string[] => {
     if (Array.isArray(v)) return v.map(String).filter(Boolean);
     if (typeof v === "string") return v.split(",").map((s) => s.trim()).filter(Boolean);
@@ -60,45 +60,30 @@ export async function POST(req: NextRequest) {
   const photoIds = parseList(customData.photo_ids);
   const licenses = parseList(customData.licenses);
 
-  console.log("[LS webhook]", { lsOrderId, buyerEmail, total, photoIds, licenses });
+  console.log("[LS webhook]", { lsOrderId, buyerEmail, userId, total, photoIds, licenses });
 
-  // Warn loudly if service role key is missing — RLS will hide existing orders
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    console.warn("[LS webhook] SUPABASE_SERVICE_ROLE_KEY not set — admin client falls back to anon key, RLS may block reads");
-  }
-
-  // Lookup buyer — if none exists yet, auto-create one with magic-link login
-  let { data: buyerUser } = await supabase
-    .from("users")
-    .select("id")
-    .eq("email", buyerEmail)
-    .maybeSingle();
-
-  if (!buyerUser && buyerEmail) {
-    console.log("[LS webhook] Creating buyer account for:", buyerEmail);
-    const { data: created, error: createErr } = await supabase.auth.admin.createUser({
-      email: buyerEmail,
-      email_confirm: true,
-      user_metadata: {
-        name: buyerEmail.split("@")[0],
-        role: "buyer",
-      },
-    });
-    if (createErr) {
-      console.warn("[LS webhook] Auto-create user failed (non-fatal):", createErr.message);
-    } else if (created?.user?.id) {
-      buyerUser = { id: created.user.id };
-      console.log("[LS webhook] Created buyer:", created.user.id);
+  // Resolve buyer_id — prefer explicit user_id, fallback to email lookup
+  let buyerId: string | null = userId ?? null;
+  if (!buyerId && buyerEmail) {
+    console.warn("[LS webhook] No user_id in custom_data, trying email lookup for:", buyerEmail);
+    const { data: existingUser } = await supabase
+      .from("users")
+      .select("id")
+      .eq("email", buyerEmail)
+      .maybeSingle();
+    buyerId = existingUser?.id ?? null;
+    if (!buyerId) {
+      console.error("[LS webhook] No user found for email:", buyerEmail);
     }
   }
 
-  // Try to upsert order. If ls_order_id already exists, fetch the existing row.
+  // Upsert order
   let order: { id: string } | null = null;
   {
     const { data, error } = await supabase
       .from("orders")
       .insert({
-        buyer_id: buyerUser?.id ?? null,
+        buyer_id: buyerId,
         buyer_email: buyerEmail,
         ls_order_id: lsOrderId,
         status: "paid",
@@ -110,7 +95,6 @@ export async function POST(req: NextRequest) {
     if (data) {
       order = data;
     } else if (error) {
-      // Duplicate (23505) is fine — fetch the existing order
       if (error.code === "23505") {
         console.log("[LS webhook] Order already exists, fetching:", lsOrderId);
         const { data: existing } = await supabase
@@ -134,7 +118,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Order not available" }, { status: 500 });
   }
 
-  // Check if items already exist (idempotent on retry)
+  // Idempotency check
   const { data: existingItems } = await supabase
     .from("order_items")
     .select("id")
@@ -142,39 +126,33 @@ export async function POST(req: NextRequest) {
     .limit(1);
 
   if (existingItems && existingItems.length > 0) {
-    console.log("[LS webhook] Items already created for order, skipping:", order.id);
+    console.log("[LS webhook] Items already created, skipping:", order.id);
     return NextResponse.json({ received: true, duplicate: true, order_id: order.id });
   }
 
-  // Fetch photos + their galleries in batch (no embedded profiles join!)
+  // Fetch photos
   let photos: Array<{
     id: string;
     gallery_id: string;
     price_personal: number;
     price_commercial: number;
   }> = [];
-
   if (photoIds.length) {
     const { data, error } = await supabase
       .from("photos")
       .select("id, gallery_id, price_personal, price_commercial")
       .in("id", photoIds);
-    if (error) {
-      console.error("[LS webhook] Photos fetch failed:", error);
-    }
+    if (error) console.error("[LS webhook] Photos fetch failed:", error);
     photos = data ?? [];
   }
 
   // Fetch gallery → photographer mapping
   const galleryIds = Array.from(new Set(photos.map((p) => p.gallery_id)));
   const { data: galleries } = galleryIds.length
-    ? await supabase
-        .from("galleries")
-        .select("id, photographer_id")
-        .in("id", galleryIds)
+    ? await supabase.from("galleries").select("id, photographer_id").in("id", galleryIds)
     : { data: [] as { id: string; photographer_id: string }[] };
 
-  // Fetch commission rates per photographer (separate query — no embed)
+  // Fetch commission rates
   const photographerIds = Array.from(new Set((galleries ?? []).map((g) => g.photographer_id)));
   const { data: profiles } = photographerIds.length
     ? await supabase
@@ -210,22 +188,18 @@ export async function POST(req: NextRequest) {
     const photo = photos.find((p) => p.id === photoId);
     if (!photo) continue;
     const license = licenses[i] ?? "personal";
-    const price =
-      license === "commercial"
-        ? photo.price_commercial
-        : photo.price_personal;
+    const price = license === "commercial" ? photo.price_commercial : photo.price_personal;
     const rate = commissionForPhoto(photoId);
-    const photographerAmount = price * rate;
-    const platformAmount = price - photographerAmount;
     items.push({
       order_id: order.id,
       photo_id: photoId,
       license,
       price,
-      photographer_amount: photographerAmount,
-      platform_amount: platformAmount,
+      photographer_amount: price * rate,
+      platform_amount: price * (1 - rate),
       download_token: generateToken(48),
-      download_expires_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
+      // Downloads do not expire — buyer always has access in their profile
+      download_expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
     });
   }
 
@@ -239,57 +213,35 @@ export async function POST(req: NextRequest) {
       );
     }
     console.log(`[LS webhook] Created ${items.length} order_items for order ${order.id}`);
-  } else {
-    console.warn("[LS webhook] No items to create for order", order.id);
   }
 
-  // Generate magic link so the buyer can access their account without a password
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://photonia.mk";
-  let magicLink: string | null = null;
-
-  if (buyerEmail && buyerUser) {
-    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
-      type: "magiclink",
-      email: buyerEmail,
-      options: {
-        redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent("/account/downloads")}`,
-      },
-    });
-    if (linkError) {
-      console.warn("[LS webhook] Magic link generation failed:", linkError.message);
-    } else {
-      magicLink = linkData?.properties?.action_link ?? null;
-    }
-  }
-
-  // Send buyer email — only if Resend is configured. Best-effort, never fail webhook.
+  // Send simple order confirmation email (no magic link — buyer is already logged in)
   const resendKey = process.env.RESEND_API_KEY;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://photonia.mk";
+
   if (resendKey && resendKey !== "your_resend_api_key" && buyerEmail) {
     try {
       const { Resend } = await import("resend");
       const resend = new Resend(resendKey);
       const fromAddress = process.env.RESEND_FROM ?? "Photonia <onboarding@resend.dev>";
 
-      const ctaUrl = magicLink ?? `${siteUrl}/login?email=${encodeURIComponent(buyerEmail)}`;
-      const ctaLabel = magicLink ? "🔑 Најави се и преземи" : "Оди на најава";
-
       await resend.emails.send({
         from: fromAddress,
         to: buyerEmail,
-        subject: "Твоите фотографии се подготвени за преземање",
+        subject: "Нарачката е успешна — Твоите фотографии те чекаат",
         html: `
           <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px;background:#fff;color:#222;">
             <h2 style="color:#0a0a0a;">Благодарам за нарачката! 🎉</h2>
-            <p>Твоите фотографии се подготвени за преземање. Кликни на копчето подолу за автоматска најава во твојот профил.</p>
+            <p>Твоите фотографии се подготвени за преземање и се достапни во твојот профил.</p>
             <p style="margin:28px 0;">
-              <a href="${ctaUrl}"
+              <a href="${siteUrl}/account/downloads"
                  style="display:inline-block;background:#e8c97e;color:#0a0a0a;font-weight:bold;padding:14px 28px;border-radius:8px;text-decoration:none;">
-                ${ctaLabel}
+                📥 Преземи ги фотографиите
               </a>
             </p>
             <p style="color:#666;font-size:13px;line-height:1.5;">
-              ${magicLink ? "Линкот за најава важи <strong>1 час</strong>. " : ""}
-              Линковите за преземање важат <strong>48 часа</strong> и можат да се употребат <strong>максимум 3 пати</strong>.
+              Фотографиите се <strong>постојано достапни</strong> во твојот профил на Photonia.
+              HD резолуција, без watermark.
             </p>
             <hr style="border:0;border-top:1px solid #eee;margin:32px 0 16px;" />
             <p style="color:#999;font-size:12px;">
@@ -304,12 +256,7 @@ export async function POST(req: NextRequest) {
     }
   } else {
     console.log("[LS webhook] Resend not configured, skipping email");
-    if (magicLink) console.log("[LS webhook] Magic link (would-have-sent):", magicLink);
   }
 
-  return NextResponse.json({
-    received: true,
-    order_id: order.id,
-    items: items.length,
-  });
+  return NextResponse.json({ received: true, order_id: order.id, items: items.length });
 }
