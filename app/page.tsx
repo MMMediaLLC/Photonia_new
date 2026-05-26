@@ -239,33 +239,16 @@ export default async function HomePage() {
           </div>
 
           <div className="flex gap-3 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-8 snap-x snap-mandatory">
-            {CATEGORIES.map(({ label, icon: Icon, href, special }) => (
+            {CATEGORIES.map(({ label, icon: Icon, href }) => (
               <Link
                 key={href}
                 href={href}
-                className={
-                  special
-                    ? "group flex flex-col items-center gap-2.5 p-4 rounded-card bg-gradient-to-br from-[#1a1612] to-[#141414] border border-[#e8c97e]/30 hover:border-[#e8c97e]/60 hover:from-[#211c14] transition-all duration-200 relative flex-shrink-0 w-[calc((100vw-2rem)/4.5)] sm:w-auto snap-start"
-                    : "group flex flex-col items-center gap-2.5 p-4 rounded-card bg-[#141414] border border-white/[0.06] hover:border-[#e8c97e]/40 hover:bg-[#1a1a1a] transition-all duration-200 flex-shrink-0 w-[calc((100vw-2rem)/4.5)] sm:w-auto snap-start"
-                }
+                className="group flex flex-col items-center gap-2.5 p-4 rounded-card bg-[#141414] border border-white/[0.06] hover:border-[#e8c97e]/40 hover:bg-[#1a1a1a] transition-all duration-200 flex-shrink-0 w-[calc((100vw-2rem)/4.5)] sm:w-auto snap-start"
               >
-                {special && (
-                  <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] uppercase tracking-wider font-bold text-[#0a0a0a] bg-[#e8c97e] px-1.5 py-0.5 rounded">
-                    NEW
-                  </span>
-                )}
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
-                  special
-                    ? "bg-[#e8c97e]/20 group-hover:bg-[#e8c97e]/30"
-                    : "bg-[#e8c97e]/10 group-hover:bg-[#e8c97e]/20"
-                }`}>
-                  <Icon size={18} className={special ? "text-[#e8c97e]" : "text-[#e8c97e]"} />
+                <div className="w-10 h-10 rounded-xl bg-[#e8c97e]/10 flex items-center justify-center group-hover:bg-[#e8c97e]/20 transition-colors">
+                  <Icon size={18} className="text-[#e8c97e]" />
                 </div>
-                <span className={`text-xs font-medium transition-colors text-center leading-tight ${
-                  special
-                    ? "text-[#f0f0f0] group-hover:text-[#e8c97e]"
-                    : "text-[#888] group-hover:text-[#f0f0f0]"
-                }`}>
+                <span className="text-[10px] font-semibold uppercase tracking-wide transition-colors text-center leading-tight text-[#888] group-hover:text-[#f0f0f0]">
                   {label}
                 </span>
               </Link>
