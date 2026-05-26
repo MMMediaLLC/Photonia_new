@@ -238,15 +238,15 @@ export default async function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+          <div className="flex gap-3 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-8 snap-x snap-mandatory">
             {CATEGORIES.map(({ label, icon: Icon, href, special }) => (
               <Link
                 key={href}
                 href={href}
                 className={
                   special
-                    ? "group flex flex-col items-center gap-2.5 p-4 rounded-card bg-gradient-to-br from-[#1a1612] to-[#141414] border border-[#e8c97e]/30 hover:border-[#e8c97e]/60 hover:from-[#211c14] transition-all duration-200 relative"
-                    : "group flex flex-col items-center gap-2.5 p-4 rounded-card bg-[#141414] border border-white/[0.06] hover:border-[#e8c97e]/40 hover:bg-[#1a1a1a] transition-all duration-200"
+                    ? "group flex flex-col items-center gap-2.5 p-4 rounded-card bg-gradient-to-br from-[#1a1612] to-[#141414] border border-[#e8c97e]/30 hover:border-[#e8c97e]/60 hover:from-[#211c14] transition-all duration-200 relative flex-shrink-0 w-[calc((100vw-2rem)/4.5)] sm:w-auto snap-start"
+                    : "group flex flex-col items-center gap-2.5 p-4 rounded-card bg-[#141414] border border-white/[0.06] hover:border-[#e8c97e]/40 hover:bg-[#1a1a1a] transition-all duration-200 flex-shrink-0 w-[calc((100vw-2rem)/4.5)] sm:w-auto snap-start"
                 }
               >
                 {special && (
