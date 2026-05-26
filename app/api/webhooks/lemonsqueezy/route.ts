@@ -167,7 +167,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Fetch gallery → photographer mapping
-  const galleryIds = [...new Set(photos.map((p) => p.gallery_id))];
+  const galleryIds = Array.from(new Set(photos.map((p) => p.gallery_id)));
   const { data: galleries } = galleryIds.length
     ? await supabase
         .from("galleries")
@@ -176,7 +176,7 @@ export async function POST(req: NextRequest) {
     : { data: [] as { id: string; photographer_id: string }[] };
 
   // Fetch commission rates per photographer (separate query — no embed)
-  const photographerIds = [...new Set((galleries ?? []).map((g) => g.photographer_id))];
+  const photographerIds = Array.from(new Set((galleries ?? []).map((g) => g.photographer_id)));
   const { data: profiles } = photographerIds.length
     ? await supabase
         .from("photographer_profiles")
