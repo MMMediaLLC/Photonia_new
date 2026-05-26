@@ -194,32 +194,43 @@ export async function POST(req: NextRequest) {
   }
 
   // Build order_items
-  const items = photoIds
-    .map((photoId, i) => {
-      const photo = photos.find((p) => p.id === photoId);
-      if (!photo) return null;
-      const license = licenses[i] ?? "personal";
-      const price =
-        license === "commercial"
-          ? photo.price_commercial
-          : license === "extended"
-          ? photo.price_extended
-          : photo.price_personal;
-      const rate = commissionForPhoto(photoId);
-      const photographerAmount = price * rate;
-      const platformAmount = price - photographerAmount;
-      return {
-        order_id: order.id,
-        photo_id: photoId,
-        license,
-        price,
-        photographer_amount: photographerAmount,
-        platform_amount: platformAmount,
-        download_token: generateToken(48),
-        download_expires_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
-      };
-    })
-    .filter(Boolean);
+  type OrderItemInsert = {
+    order_id: string;
+    photo_id: string;
+    license: string;
+    price: number;
+    photographer_amount: number;
+    platform_amount: number;
+    download_token: string;
+    download_expires_at: string;
+  };
+
+  const items: OrderItemInsert[] = [];
+  for (let i = 0; i < photoIds.length; i++) {
+    const photoId = photoIds[i];
+    const photo = photos.find((p) => p.id === photoId);
+    if (!photo) continue;
+    const license = licenses[i] ?? "personal";
+    const price =
+      license === "commercial"
+        ? photo.price_commercial
+        : license === "extended"
+        ? photo.price_extended
+        : photo.price_personal;
+    const rate = commissionForPhoto(photoId);
+    const photographerAmount = price * rate;
+    const platformAmount = price - photographerAmount;
+    items.push({
+      order_id: order.id,
+      photo_id: photoId,
+      license,
+      price,
+      photographer_amount: photographerAmount,
+      platform_amount: platformAmount,
+      download_token: generateToken(48),
+      download_expires_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
+    });
+  }
 
   if (items.length) {
     const { error: itemsError } = await supabase.from("order_items").insert(items);
