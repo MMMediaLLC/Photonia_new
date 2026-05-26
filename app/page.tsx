@@ -12,7 +12,6 @@ import {
   CalendarDays,
   Shirt,
   MapPin,
-  UserPlus,
   ShoppingCart,
   Download,
   CheckCircle,

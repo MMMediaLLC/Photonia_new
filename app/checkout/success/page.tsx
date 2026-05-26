@@ -31,7 +31,7 @@ export default function CheckoutSuccessPage() {
                 <span className="text-[#e8c97e] text-xs font-bold">2</span>
               </div>
               <p className="text-sm text-[#888]">
-                Кликни на копчето „🔑 Најави се и преземи" — автоматски си логиран
+                Кликни на копчето „🔑 Најави се и преземи&ldquo; — автоматски си логиран
               </p>
             </div>
             <div className="flex items-start gap-3">
