@@ -16,16 +16,46 @@ export default async function SearchPage({ searchParams }: Props) {
 
   if (q) {
     const supabase = createClient();
-    const { data } = await supabase
+    const { data: rows } = await supabase
       .from("galleries")
-      .select(
-        `*, photographer_profiles(display_name, user_id), cover_photo:photos!galleries_cover_photo_id_fkey(id, cloudinary_public_id, width, height)`
-      )
+      .select("*")
       .eq("is_public", true)
       .or(`title.ilike.%${q}%,description.ilike.%${q}%,category.ilike.%${q}%`)
       .order("created_at", { ascending: false })
       .limit(24);
-    galleries = (data as Gallery[]) ?? [];
+
+    // Enrich with covers + photographer names (separate queries to avoid RLS join issues)
+    const list = rows ?? [];
+    if (list.length) {
+      const coverIds = list
+        .map((g) => g.cover_photo_id)
+        .filter(Boolean) as string[];
+      const photographerIds = list.map((g) => g.photographer_id);
+
+      const [{ data: covers }, { data: profiles }] = await Promise.all([
+        coverIds.length
+          ? supabase
+              .from("photos")
+              .select("id, cloudinary_public_id, width, height")
+              .in("id", coverIds)
+          : Promise.resolve({
+              data: [] as { id: string; cloudinary_public_id: string; width: number; height: number }[],
+            }),
+        photographerIds.length
+          ? supabase
+              .from("photographer_profiles")
+              .select("user_id, display_name")
+              .in("user_id", photographerIds)
+          : Promise.resolve({ data: [] as { user_id: string; display_name: string }[] }),
+      ]);
+
+      galleries = list.map((g) => ({
+        ...g,
+        cover_photo: covers?.find((c) => c.id === g.cover_photo_id) ?? null,
+        photographer_profiles:
+          profiles?.find((p) => p.user_id === g.photographer_id) ?? null,
+      })) as unknown as Gallery[];
+    }
   }
 
   return (
@@ -39,7 +69,7 @@ export default async function SearchPage({ searchParams }: Props) {
             type="text"
             name="q"
             defaultValue={q}
-            placeholder="Пребарај галерии..."
+            placeholder="Пребарај галерии, настани, клучни зборови..."
             className="w-full bg-[#141414] border border-white/[0.08] rounded-card pl-9 pr-4 py-3 text-sm text-[#f0f0f0] placeholder:text-[#888] focus:outline-none focus:border-[#e8c97e]/50"
           />
         </div>
@@ -65,6 +95,12 @@ export default async function SearchPage({ searchParams }: Props) {
 
       {q && galleries.length === 0 && (
         <p className="text-center text-[#888] py-16">Нема резултати за &bdquo;{q}&ldquo;.</p>
+      )}
+
+      {!q && (
+        <p className="text-center text-[#888] py-16">
+          Внеси клучен збор за да започнеш пребарување.
+        </p>
       )}
     </div>
   );
