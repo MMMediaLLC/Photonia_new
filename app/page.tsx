@@ -28,22 +28,15 @@ export const metadata: Metadata = {
     "Купи оригинални фотографии во висока резолуција — без watermark, веднаш достапни за преземање. Лични, комерцијални и проширени лиценци.",
 };
 
-interface NavItem {
-  label: string;
-  icon: typeof CalendarDays;
-  href: string;
-  special?: boolean;
-}
-
-const CATEGORIES: NavItem[] = [
+const CATEGORIES = [
   { label: "Настани", icon: CalendarDays, href: "/galleries?category=Настани" },
   { label: "Спорт", icon: Trophy, href: "/galleries?category=Спорт" },
   { label: "Репортажи", icon: Newspaper, href: "/galleries?category=Репортажи" },
   { label: "Природа", icon: Leaf, href: "/galleries?category=Природа" },
   { label: "Корпоративни", icon: Briefcase, href: "/galleries?category=Корпоративни" },
   { label: "Патувања", icon: Plane, href: "/galleries?category=Патувања" },
-  { label: "Press пакети", icon: Package, href: "/press", special: true },
-  { label: "Премиум", icon: Star, href: "/premium", special: true },
+  { label: "Press пакети", icon: Package, href: "/press" },
+  { label: "Премиум", icon: Star, href: "/premium" },
 ];
 
 const HOW_IT_WORKS = [
