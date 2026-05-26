@@ -24,9 +24,9 @@ import Footer from "@/components/layout/Footer";
 import type { Gallery } from "@/lib/types";
 
 export const metadata: Metadata = {
-  title: "Photonia — Фото Пазар",
+  title: "Photonia — Купи професионални фотографии во HD",
   description:
-    "Платформа за фотографии со можност за избор и брзо купување. Купи уникатни фотографии директно од македонски фотографи.",
+    "Купи оригинални фотографии во висока резолуција — без watermark, веднаш достапни за преземање. Лични, комерцијални и проширени лиценци.",
 };
 
 const CATEGORIES = [
@@ -42,28 +42,28 @@ const CATEGORIES = [
 
 const HOW_IT_WORKS = [
   {
-    icon: UserPlus,
-    step: "01",
-    title: "Регистрирај се",
-    desc: "Создај бесплатен профил за неколку секунди.",
-  },
-  {
     icon: Search,
-    step: "02",
+    step: "01",
     title: "Прегледај",
-    desc: "Истражи галерии и пронајди ја совршената фотографија.",
+    desc: "Истражи галерии и пронајди ја сликата што ти треба.",
   },
   {
     icon: ShoppingCart,
+    step: "02",
+    title: "Избери лиценца",
+    desc: "Лична за себе, Комерцијална за бизнис, Проширена за неограничена употреба.",
+  },
+  {
+    icon: CheckCircle,
     step: "03",
-    title: "Додај во кошничка",
-    desc: "Избери лиценца — Лична, Комерцијална или Проширена.",
+    title: "Плати безбедно",
+    desc: "Плаќање со картичка преку LemonSqueezy. Без регистрација и без претплата.",
   },
   {
     icon: Download,
     step: "04",
-    title: "Плати и преземи",
-    desc: "Безбедна наплата и тренутно преземање на оригиналот.",
+    title: "Преземи HD оригинал",
+    desc: "Веднаш ja симнуваш сликата во висока резолуција — без watermark.",
   },
 ];
 
@@ -166,16 +166,16 @@ export default async function HomePage() {
           {/* Content */}
           <div className="relative z-10 text-center max-w-4xl mx-auto px-4">
             <span className="inline-block text-xs font-semibold tracking-[0.2em] uppercase text-[#e8c97e] mb-5 px-3 py-1.5 border border-[#e8c97e]/30 rounded-full">
-              Македонски фото пазар
+              HD фотографии · Без watermark
             </span>
             <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight mb-6 leading-[1.05]">
-              Платформа за фотографии
+              Уникатни фотографии
               <br />
-              <span className="text-[#e8c97e]">со брзо купување</span>
+              <span className="text-[#e8c97e]">во висока резолуција</span>
             </h1>
             <p className="text-lg sm:text-xl text-[#888] mb-10 max-w-2xl mx-auto leading-relaxed">
-              Прегледај галерии, избери фотографија, купи лиценца и преземи
-              оригинал — сè за неколку минути.
+              Најди ja сликата што ти треба, плати безбедно и веднаш ja преземи
+              во оригинална HD резолуција — <strong className="text-[#f0f0f0]">без watermark</strong>.
             </p>
 
             {/* Search */}
@@ -191,7 +191,7 @@ export default async function HomePage() {
                 <input
                   type="text"
                   name="q"
-                  placeholder="Пребарај галерии, фотографи, настани..."
+                  placeholder="Пребарај галерии, настани, ключни зборови..."
                   className="w-full bg-[#141414]/90 backdrop-blur border border-white/[0.1] rounded-card pl-10 pr-4 py-4 text-sm text-[#f0f0f0] placeholder:text-[#555] focus:outline-none focus:border-[#e8c97e]/50 transition-colors"
                 />
               </div>
@@ -203,18 +203,18 @@ export default async function HomePage() {
               </button>
             </form>
 
-            <div className="flex items-center justify-center gap-6 text-sm text-[#666]">
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-[#888]">
+              <span className="flex items-center gap-1.5">
+                <CheckCircle size={13} className="text-[#e8c97e]" />
+                HD оригинал без watermark
+              </span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle size={13} className="text-[#e8c97e]" />
+                Веднаш достапно
+              </span>
               <span className="flex items-center gap-1.5">
                 <CheckCircle size={13} className="text-[#e8c97e]" />
                 Без претплата
-              </span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle size={13} className="text-[#e8c97e]" />
-                Тренутно преземање
-              </span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle size={13} className="text-[#e8c97e]" />
-                Македонски фотографи
               </span>
             </div>
           </div>
@@ -226,9 +226,9 @@ export default async function HomePage() {
         {/* ═══ КАТЕГОРИИ ═══ */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
           <div className="text-center mb-10">
-            <h2 className="text-2xl font-bold mb-2">Прегледај по категорија</h2>
+            <h2 className="text-2xl font-bold mb-2">Прегледај по тема</h2>
             <p className="text-[#888] text-sm">
-              Пронајди ја фотографијата која ти треба
+              Илјадници слики подредени по категории
             </p>
           </div>
 
@@ -310,9 +310,12 @@ export default async function HomePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <div className="text-center mb-14">
               <p className="text-xs uppercase tracking-widest text-[#e8c97e] mb-2">
-                Процес
+                Како функционира
               </p>
-              <h2 className="text-2xl font-bold">Едноставен и брз процес</h2>
+              <h2 className="text-2xl font-bold mb-3">Од клик до HD слика — за 2 минути</h2>
+              <p className="text-[#888] text-sm max-w-lg mx-auto">
+                Без регистрација, без месечна претплата, без сложени услови.
+              </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative">
@@ -407,28 +410,28 @@ export default async function HomePage() {
             />
             <div className="relative z-10">
               <p className="text-xs uppercase tracking-widest text-[#e8c97e] mb-3">
-                За фотографи
+                За тебе
               </p>
               <h2 className="text-2xl sm:text-3xl font-bold mb-4">
-                Сакате вашиот настан да биде претставен?
+                Се позна на некоja слика?
               </h2>
-              <p className="text-[#888] mb-8 max-w-lg mx-auto">
-                Придружете се на Photonia, продавајте ваши фотографии и задржете{" "}
-                <strong className="text-[#e8c97e]">80%</strong> од секоја продажба.
-                Без месечна претплата.
+              <p className="text-[#888] mb-8 max-w-lg mx-auto leading-relaxed">
+                Купи ja својата фотографија од настан, концерт или спортска средба
+                во <strong className="text-[#f0f0f0]">HD резолуција без watermark</strong>.
+                Без претплата, без сложени услови.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <Link
-                  href="/register"
+                  href="/galleries"
                   className="inline-flex items-center gap-2 bg-[#e8c97e] text-[#0a0a0a] font-bold px-8 py-3.5 rounded-card hover:bg-[#d4b46a] transition-colors"
                 >
-                  Стани фотограф <ArrowRight size={16} />
+                  Прегледај галерии <ArrowRight size={16} />
                 </Link>
                 <Link
-                  href="/galleries"
+                  href="/search"
                   className="inline-flex items-center gap-2 border border-white/[0.12] text-[#f0f0f0] font-medium px-8 py-3.5 rounded-card hover:border-white/25 transition-colors"
                 >
-                  Види портфолио
+                  Пребарај по име/настан
                 </Link>
               </div>
             </div>

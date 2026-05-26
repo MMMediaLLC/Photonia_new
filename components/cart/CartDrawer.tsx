@@ -128,10 +128,11 @@ export default function CartDrawer() {
                       onChange={(e) =>
                         updateLicense(item.photo.id, e.target.value as LicenseType)
                       }
-                      className="mt-2 text-xs bg-[#141414] border border-white/[0.08] rounded-lg px-2 py-1 text-[#f0f0f0] cursor-pointer"
+                      className="mt-2 text-xs bg-[#141414] border border-white/[0.08] rounded-lg px-2 py-1 text-[#f0f0f0] cursor-pointer w-full"
+                      title="Сите лиценци даваат HD слика без watermark"
                     >
                       <option value="personal">
-                        Лична — {formatPrice(item.photo.price_personal)}
+                        Лична употреба — {formatPrice(item.photo.price_personal)}
                       </option>
                       <option value="commercial">
                         Комерцијална — {formatPrice(item.photo.price_commercial)}
@@ -163,6 +164,11 @@ export default function CartDrawer() {
         {/* Footer */}
         {items.length > 0 && (
           <div className="px-6 py-5 border-t border-white/[0.08]">
+            <div className="bg-[#0a0a0a] border border-white/[0.06] rounded-lg p-3 mb-4 text-xs text-[#888] leading-relaxed">
+              <p className="text-[#f0f0f0] font-medium mb-1">✓ Што добиваш:</p>
+              <p>HD оригинал во висока резолуција, без watermark, веднаш достапно за преземање.</p>
+            </div>
+
             <div className="flex justify-between items-center mb-4">
               <span className="text-[#888] text-sm">Вкупно</span>
               <span className="text-xl font-bold text-[#e8c97e]">{formatPrice(total)}</span>
@@ -173,10 +179,10 @@ export default function CartDrawer() {
               className="w-full flex items-center justify-center gap-2 bg-[#e8c97e] text-[#0a0a0a] font-semibold py-3 rounded-card hover:bg-[#d4b46a] transition-colors disabled:opacity-60"
             >
               {checkingOut && <Loader2 size={14} className="animate-spin" />}
-              {checkingOut ? "Пренасочување..." : "Плати сега"}
+              {checkingOut ? "Пренасочување..." : "Плати безбедно"}
             </button>
             <p className="text-xs text-[#888] text-center mt-3">
-              Безбедна наплата преку LemonSqueezy
+              🔒 Безбедна наплата · Без претплата · Веднаш преземаш
             </p>
           </div>
         )}

@@ -6,8 +6,8 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
         <div>
           <p className="text-lg font-bold text-[#e8c97e] mb-2">PHOTONIA</p>
-          <p className="text-sm text-[#888]">
-            Македонски фото пазар. Купи уникатни фотографии директно од фотографите.
+          <p className="text-sm text-[#888] leading-relaxed">
+            Уникатни фотографии од настани, спорт и култура. Купи HD оригинал без watermark — без претплата, веднаш достапно.
           </p>
         </div>
 
@@ -19,6 +19,9 @@ export default function Footer() {
             </Link>
             <Link href="/search" className="text-[#f0f0f0] hover:text-[#e8c97e] transition-colors">
               Пребарај
+            </Link>
+            <Link href="/faq" className="text-[#f0f0f0] hover:text-[#e8c97e] transition-colors">
+              Често прашања
             </Link>
           </div>
         </div>

@@ -11,19 +11,19 @@ export default function CheckoutSuccessPage() {
 
         <h1 className="text-3xl font-bold mb-3">Плаќањето е успешно!</h1>
         <p className="text-[#888] mb-8 leading-relaxed">
-          Ви благодариме на купувањето. Вашите фотографии се подготвени за преземање.
-          Испративме е-маил потврда на вашата адреса.
+          Благодариме на купувањето. Сликите се <strong className="text-[#f0f0f0]">подготвени во HD без watermark</strong>.
+          На твојот email испративме <strong className="text-[#f0f0f0]">магичен линк</strong> за веднаш да ги симнеш.
         </p>
 
         <div className="bg-[#141414] border border-white/[0.08] rounded-card p-5 mb-8 text-left">
-          <p className="text-sm text-[#888] mb-3">Следни чекори:</p>
+          <p className="text-sm text-[#f0f0f0] font-medium mb-3">📧 Што следно?</p>
           <div className="flex flex-col gap-3">
             <div className="flex items-start gap-3">
               <div className="w-6 h-6 rounded-full bg-[#e8c97e]/15 flex items-center justify-center flex-shrink-0 mt-0.5">
                 <span className="text-[#e8c97e] text-xs font-bold">1</span>
               </div>
               <p className="text-sm text-[#888]">
-                Проверете го вашиот е-маил за потврда на нарачката
+                Отвори го email-от од Photonia (провери ja и Spam папката)
               </p>
             </div>
             <div className="flex items-start gap-3">
@@ -31,7 +31,7 @@ export default function CheckoutSuccessPage() {
                 <span className="text-[#e8c97e] text-xs font-bold">2</span>
               </div>
               <p className="text-sm text-[#888]">
-                Одете на &bdquo;Преземања&ldquo; за да ги симнете фотографиите
+                Кликни на копчето „🔑 Најави се и преземи" — автоматски си логиран
               </p>
             </div>
             <div className="flex items-start gap-3">
@@ -39,7 +39,7 @@ export default function CheckoutSuccessPage() {
                 <span className="text-[#e8c97e] text-xs font-bold">3</span>
               </div>
               <p className="text-sm text-[#888]">
-                Линковите за преземање важат 48 часа (max 3 преземања)
+                Преземи ja HD сликата (важност: 48 часа, до 3 преземања)
               </p>
             </div>
           </div>
