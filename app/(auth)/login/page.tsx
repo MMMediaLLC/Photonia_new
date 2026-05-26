@@ -86,12 +86,19 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-center text-sm text-[#888] mt-4">
-          Немаш профил?{" "}
-          <Link href="/register" className="text-[#e8c97e] hover:underline">
-            Регистрирај се
-          </Link>
-        </p>
+        <div className="text-center text-sm text-[#888] mt-4 flex flex-col gap-2">
+          <p>
+            <Link href="/magic-link" className="text-[#e8c97e] hover:underline">
+              Не помниш лозинка? Прати магичен линк
+            </Link>
+          </p>
+          <p>
+            Немаш профил?{" "}
+            <Link href="/register" className="text-[#e8c97e] hover:underline">
+              Регистрирај се
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

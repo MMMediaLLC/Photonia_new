@@ -67,12 +67,30 @@ export async function POST(req: NextRequest) {
     console.warn("[LS webhook] SUPABASE_SERVICE_ROLE_KEY not set — admin client falls back to anon key, RLS may block reads");
   }
 
-  // Lookup buyer (optional — may not have account)
-  const { data: buyerUser } = await supabase
+  // Lookup buyer — if none exists yet, auto-create one with magic-link login
+  let { data: buyerUser } = await supabase
     .from("users")
     .select("id")
     .eq("email", buyerEmail)
     .maybeSingle();
+
+  if (!buyerUser && buyerEmail) {
+    console.log("[LS webhook] Creating buyer account for:", buyerEmail);
+    const { data: created, error: createErr } = await supabase.auth.admin.createUser({
+      email: buyerEmail,
+      email_confirm: true,
+      user_metadata: {
+        name: buyerEmail.split("@")[0],
+        role: "buyer",
+      },
+    });
+    if (createErr) {
+      console.warn("[LS webhook] Auto-create user failed (non-fatal):", createErr.message);
+    } else if (created?.user?.id) {
+      buyerUser = { id: created.user.id };
+      console.log("[LS webhook] Created buyer:", created.user.id);
+    }
+  }
 
   // Try to upsert order. If ls_order_id already exists, fetch the existing row.
   let order: { id: string } | null = null;
@@ -217,31 +235,59 @@ export async function POST(req: NextRequest) {
     console.warn("[LS webhook] No items to create for order", order.id);
   }
 
+  // Generate magic link so the buyer can access their account without a password
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://photonia-new.vercel.app";
+  let magicLink: string | null = null;
+
+  if (buyerEmail && buyerUser) {
+    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+      type: "magiclink",
+      email: buyerEmail,
+      options: {
+        redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent("/account/downloads")}`,
+      },
+    });
+    if (linkError) {
+      console.warn("[LS webhook] Magic link generation failed:", linkError.message);
+    } else {
+      magicLink = linkData?.properties?.action_link ?? null;
+    }
+  }
+
   // Send buyer email — only if Resend is configured. Best-effort, never fail webhook.
   const resendKey = process.env.RESEND_API_KEY;
   if (resendKey && resendKey !== "your_resend_api_key" && buyerEmail) {
     try {
       const { Resend } = await import("resend");
       const resend = new Resend(resendKey);
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://photonia-new.vercel.app";
-      // Use Resend's default sender until photonia.mk is verified in Resend → Domains
       const fromAddress = process.env.RESEND_FROM ?? "Photonia <onboarding@resend.dev>";
+
+      const ctaUrl = magicLink ?? `${siteUrl}/login?email=${encodeURIComponent(buyerEmail)}`;
+      const ctaLabel = magicLink ? "🔑 Најави се и преземи" : "Оди на најава";
+
       await resend.emails.send({
         from: fromAddress,
         to: buyerEmail,
         subject: "Твоите фотографии се подготвени за преземање",
         html: `
-          <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px;">
-            <h2 style="color:#e8c97e;">Благодарам за нарачката! 🎉</h2>
-            <p>Твоите фотографии се подготвени за преземање.</p>
-            <p style="margin:24px 0;">
-              <a href="${siteUrl}/account/downloads"
-                 style="display:inline-block;background:#e8c97e;color:#0a0a0a;font-weight:bold;padding:12px 24px;border-radius:8px;text-decoration:none;">
-                Оди на Мои преземања
+          <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px;background:#fff;color:#222;">
+            <h2 style="color:#0a0a0a;">Благодарам за нарачката! 🎉</h2>
+            <p>Твоите фотографии се подготвени за преземање. Кликни на копчето подолу за автоматска најава во твојот профил.</p>
+            <p style="margin:28px 0;">
+              <a href="${ctaUrl}"
+                 style="display:inline-block;background:#e8c97e;color:#0a0a0a;font-weight:bold;padding:14px 28px;border-radius:8px;text-decoration:none;">
+                ${ctaLabel}
               </a>
             </p>
-            <p style="color:#666;font-size:13px;">Линковите за преземање важат <strong>48 часа</strong> и можат да се употребат <strong>максимум 3 пати</strong>.</p>
-            <p style="color:#999;font-size:12px;margin-top:32px;">Photonia — Македонски Фото Пазар</p>
+            <p style="color:#666;font-size:13px;line-height:1.5;">
+              ${magicLink ? "Линкот за најава важи <strong>1 час</strong>. " : ""}
+              Линковите за преземање важат <strong>48 часа</strong> и можат да се употребат <strong>максимум 3 пати</strong>.
+            </p>
+            <hr style="border:0;border-top:1px solid #eee;margin:32px 0 16px;" />
+            <p style="color:#999;font-size:12px;">
+              Photonia — Македонски Фото Пазар<br/>
+              Ако имаш прашања, контактирај не на info@photonia.mk
+            </p>
           </div>
         `,
       });
@@ -250,6 +296,7 @@ export async function POST(req: NextRequest) {
     }
   } else {
     console.log("[LS webhook] Resend not configured, skipping email");
+    if (magicLink) console.log("[LS webhook] Magic link (would-have-sent):", magicLink);
   }
 
   return NextResponse.json({
