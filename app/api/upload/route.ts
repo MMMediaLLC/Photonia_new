@@ -72,7 +72,6 @@ export async function POST(req: NextRequest) {
       order_index: orderIndex,
       price_personal: 500,
       price_commercial: 1500,
-      price_extended: 3000,
     })
     .select()
     .single();

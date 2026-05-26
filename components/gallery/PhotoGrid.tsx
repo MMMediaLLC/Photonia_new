@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { ShoppingCart, ZoomIn, ChevronLeft, ChevronRight, X, Check } from "lucide-react";
 import type { Gallery, Photo, LicenseType } from "@/lib/types";
+import { LICENSE_TYPES } from "@/lib/types";
 import { getCloudinaryWatermarkedUrl, formatPrice } from "@/lib/utils";
 import { useCart } from "@/components/cart/CartProvider";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -74,12 +75,13 @@ export default function PhotoGrid({ photos, gallery }: Props) {
     : false;
 
   function priceForLicense(p: Photo, license: LicenseType) {
-    return license === "personal"
-      ? p.price_personal
-      : license === "commercial"
-      ? p.price_commercial
-      : p.price_extended;
+    return license === "personal" ? p.price_personal : p.price_commercial;
   }
+
+  // Only show license options that have a price set
+  const availableLicenses = (["personal", "commercial"] as const).filter(
+    (lic) => lightboxPhoto && priceForLicense(lightboxPhoto, lic) > 0
+  );
 
   return (
     <>
@@ -147,7 +149,7 @@ export default function PhotoGrid({ photos, gallery }: Props) {
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
         >
-          {/* Top bar — flows in portrait/desktop, overlays in landscape mobile */}
+          {/* Top bar */}
           <div
             className="flex items-center justify-between px-4 sm:px-6 py-4 text-white/80 landscape:max-md:absolute landscape:max-md:top-0 landscape:max-md:left-0 landscape:max-md:right-0 landscape:max-md:z-10 landscape:max-md:bg-gradient-to-b landscape:max-md:from-black/70 landscape:max-md:to-transparent landscape:max-md:py-2"
             onClick={(e) => e.stopPropagation()}
@@ -171,7 +173,7 @@ export default function PhotoGrid({ photos, gallery }: Props) {
             </button>
           </div>
 
-          {/* Image area — fills viewport in landscape mobile */}
+          {/* Image area */}
           <div
             className="flex-1 relative flex items-center justify-center px-2 sm:px-12 landscape:max-md:absolute landscape:max-md:inset-0 landscape:max-md:px-0"
             onClick={(e) => e.stopPropagation()}
@@ -186,7 +188,6 @@ export default function PhotoGrid({ photos, gallery }: Props) {
               priority
             />
 
-            {/* Prev/Next arrows */}
             {photos.length > 1 && (
               <>
                 <button
@@ -207,15 +208,15 @@ export default function PhotoGrid({ photos, gallery }: Props) {
             )}
           </div>
 
-          {/* Bottom: license selector + buy — overlays in landscape mobile */}
+          {/* Bottom: license selector + buy */}
           <div
             className="px-4 sm:px-6 py-4 bg-gradient-to-t from-black/80 to-transparent landscape:max-md:absolute landscape:max-md:bottom-0 landscape:max-md:left-0 landscape:max-md:right-0 landscape:max-md:z-10 landscape:max-md:py-2"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-3 landscape:max-md:flex-row landscape:max-md:gap-2">
-              {/* License pills */}
+              {/* License pills — only show if price > 0 */}
               <div className="flex gap-2 flex-1 overflow-x-auto pb-1 landscape:max-md:pb-0">
-                {(["personal", "commercial", "extended"] as const).map((lic) => (
+                {availableLicenses.map((lic) => (
                   <button
                     key={lic}
                     onClick={() => setSelectedLicense(lic)}
@@ -226,9 +227,7 @@ export default function PhotoGrid({ photos, gallery }: Props) {
                         : "bg-white/[0.04] border-white/[0.08] text-white/70 hover:bg-white/[0.08]"
                     )}
                   >
-                    <div className="capitalize">
-                      {lic === "personal" ? "Лична" : lic === "commercial" ? "Комерцијална" : "Проширена"}
-                    </div>
+                    <div>{LICENSE_TYPES[lic].label}</div>
                     <div className="text-[11px] opacity-80">
                       {formatPrice(priceForLicense(lightboxPhoto, lic))}
                     </div>
@@ -238,9 +237,7 @@ export default function PhotoGrid({ photos, gallery }: Props) {
 
               {/* Buy button */}
               <button
-                onClick={() => {
-                  addItem(lightboxPhoto, gallery, selectedLicense);
-                }}
+                onClick={() => addItem(lightboxPhoto, gallery, selectedLicense)}
                 disabled={lightboxInCart}
                 className={cn(
                   "flex items-center justify-center gap-2 px-5 py-3 rounded-card text-sm font-semibold transition-colors flex-shrink-0 landscape:max-md:px-3 landscape:max-md:py-2",

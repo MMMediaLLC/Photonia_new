@@ -5,6 +5,7 @@ import { useCart } from "./CartProvider";
 import { X, ShoppingCart, Trash2, Loader2 } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import type { LicenseType } from "@/lib/types";
+import { LICENSE_TYPES } from "@/lib/types";
 import Image from "next/image";
 import { getCloudinaryWatermarkedUrl } from "@/lib/utils";
 import { useRouter } from "next/navigation";
@@ -26,9 +27,7 @@ export default function CartDrawer() {
         price:
           i.license === "personal"
             ? i.photo.price_personal
-            : i.license === "commercial"
-            ? i.photo.price_commercial
-            : i.photo.price_extended,
+            : i.photo.price_commercial,
       })),
     };
 
@@ -93,9 +92,7 @@ export default function CartDrawer() {
               const price =
                 item.license === "personal"
                   ? item.photo.price_personal
-                  : item.license === "commercial"
-                  ? item.photo.price_commercial
-                  : item.photo.price_extended;
+                  : item.photo.price_commercial;
 
               return (
                 <div
@@ -132,13 +129,10 @@ export default function CartDrawer() {
                       title="Сите лиценци даваат HD слика без watermark"
                     >
                       <option value="personal">
-                        Лична употреба — {formatPrice(item.photo.price_personal)}
+                        {LICENSE_TYPES.personal.label} — {formatPrice(item.photo.price_personal)}
                       </option>
                       <option value="commercial">
-                        Комерцијална — {formatPrice(item.photo.price_commercial)}
-                      </option>
-                      <option value="extended">
-                        Проширена — {formatPrice(item.photo.price_extended)}
+                        {LICENSE_TYPES.commercial.label} — {formatPrice(item.photo.price_commercial)}
                       </option>
                     </select>
                   </div>

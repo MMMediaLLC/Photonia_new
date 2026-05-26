@@ -125,7 +125,7 @@ export default function EditGalleryPage({ params }: { params: { id: string } }) 
 
   async function updatePhotoPrice(
     photoId: string,
-    field: "price_personal" | "price_commercial" | "price_extended",
+    field: "price_personal" | "price_commercial",
     value: number
   ) {
     const supabase = createClient();
@@ -303,10 +303,10 @@ export default function EditGalleryPage({ params }: { params: { id: string } }) 
 
                 {/* Price inputs */}
                 <div className="p-2 flex flex-col gap-1">
-                  {(["price_personal", "price_commercial", "price_extended"] as const).map((field) => (
+                  {(["price_personal", "price_commercial"] as const).map((field) => (
                     <div key={field} className="flex items-center gap-1 text-xs">
                       <span className="text-[#888] w-5 flex-shrink-0">
-                        {field === "price_personal" ? "L" : field === "price_commercial" ? "K" : "P"}
+                        {field === "price_personal" ? "Л" : "К"}
                       </span>
                       <input
                         type="number"

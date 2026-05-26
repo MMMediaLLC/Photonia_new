@@ -5,7 +5,6 @@ import { formatPrice } from "@/lib/utils";
 const LICENSE_LABELS: Record<string, string> = {
   personal: "Лична",
   commercial: "Комерцијална",
-  extended: "Проширена",
 };
 
 export default async function DashboardSalesPage() {

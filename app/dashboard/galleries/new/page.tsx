@@ -19,7 +19,6 @@ export default function NewGalleryPage() {
     event_date: "",
     price_personal: "500",
     price_commercial: "1500",
-    price_extended: "3000",
   });
 
   function set(key: string, value: string) {
@@ -124,11 +123,10 @@ export default function NewGalleryPage() {
 
         <div className="border-t border-white/[0.06] pt-5">
           <p className="text-sm font-medium mb-3">Стандардни цени (МКД)</p>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             {[
-              { key: "price_personal", label: "Лична" },
-              { key: "price_commercial", label: "Комерцијална" },
-              { key: "price_extended", label: "Проширена" },
+              { key: "price_personal", label: "Лична лиценца" },
+              { key: "price_commercial", label: "Комерцијална лиценца" },
             ].map(({ key, label }) => (
               <div key={key}>
                 <label className="text-xs text-[#888] mb-1.5 block">{label}</label>
@@ -136,7 +134,8 @@ export default function NewGalleryPage() {
                   type="number"
                   value={form[key as keyof typeof form]}
                   onChange={(e) => set(key, e.target.value)}
-                  min="0"
+                  min="100"
+                  required
                   className={inputClass}
                 />
               </div>

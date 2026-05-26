@@ -76,9 +76,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const price =
       item.license === "personal"
         ? item.photo.price_personal
-        : item.license === "commercial"
-        ? item.photo.price_commercial
-        : item.photo.price_extended;
+        : item.photo.price_commercial;
     return sum + price;
   }, 0);
 

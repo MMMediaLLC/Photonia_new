@@ -1,7 +1,22 @@
 export type UserRole = "admin" | "photographer" | "buyer";
 export type OrderStatus = "pending" | "paid" | "refunded";
-export type LicenseType = "personal" | "commercial" | "extended";
+export type LicenseType = "personal" | "commercial";
 export type PayoutStatus = "pending" | "paid";
+
+export const LICENSE_TYPES = {
+  personal: {
+    key: "personal" as const,
+    label: "Лична",
+    shortDescription: "За лична, некомерцијална употреба",
+    icon: "📷",
+  },
+  commercial: {
+    key: "commercial" as const,
+    label: "Комерцијална",
+    shortDescription: "За бизнис, реклами, медиуми",
+    icon: "💼",
+  },
+} as const;
 
 export interface User {
   id: string;
@@ -49,7 +64,6 @@ export interface Photo {
   height: number;
   price_personal: number;
   price_commercial: number;
-  price_extended: number;
   ls_product_id: string | null;
   tags: string[];
   order_index: number;

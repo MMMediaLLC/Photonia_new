@@ -152,13 +152,12 @@ export async function POST(req: NextRequest) {
     gallery_id: string;
     price_personal: number;
     price_commercial: number;
-    price_extended: number;
   }> = [];
 
   if (photoIds.length) {
     const { data, error } = await supabase
       .from("photos")
-      .select("id, gallery_id, price_personal, price_commercial, price_extended")
+      .select("id, gallery_id, price_personal, price_commercial")
       .in("id", photoIds);
     if (error) {
       console.error("[LS webhook] Photos fetch failed:", error);
@@ -214,8 +213,6 @@ export async function POST(req: NextRequest) {
     const price =
       license === "commercial"
         ? photo.price_commercial
-        : license === "extended"
-        ? photo.price_extended
         : photo.price_personal;
     const rate = commissionForPhoto(photoId);
     const photographerAmount = price * rate;

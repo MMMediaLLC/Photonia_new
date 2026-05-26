@@ -7,7 +7,6 @@ import Link from "next/link";
 const LICENSE_LABELS: Record<string, string> = {
   personal: "Лична",
   commercial: "Комерцијална",
-  extended: "Проширена",
 };
 
 export default async function AccountOrdersPage() {
