@@ -247,7 +247,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Generate magic link so the buyer can access their account without a password
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://photonia-new.vercel.app";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://photonia.mk";
   let magicLink: string | null = null;
 
   if (buyerEmail && buyerUser) {
