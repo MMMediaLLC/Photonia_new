@@ -4,17 +4,17 @@ import Image from "next/image";
 import {
   Search,
   ArrowRight,
-  Heart,
-  User,
   Leaf,
-  Building2,
-  Zap,
+  Briefcase,
+  Trophy,
   CalendarDays,
-  Shirt,
-  MapPin,
+  Newspaper,
+  Plane,
   ShoppingCart,
   Download,
   CheckCircle,
+  Package,
+  Star,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import GalleryCard from "@/components/gallery/GalleryCard";
@@ -29,14 +29,27 @@ export const metadata: Metadata = {
 };
 
 const CATEGORIES = [
-  { label: "Свадба", icon: Heart, slug: "Свадба" },
-  { label: "Портрет", icon: User, slug: "Портрет" },
+  { label: "Настани", icon: CalendarDays, slug: "Настани" },
+  { label: "Спорт", icon: Trophy, slug: "Спорт" },
+  { label: "Репортажи", icon: Newspaper, slug: "Репортажи" },
   { label: "Природа", icon: Leaf, slug: "Природа" },
-  { label: "Архитектура", icon: Building2, slug: "Архитектура" },
-  { label: "Спорт", icon: Zap, slug: "Спорт" },
-  { label: "Настан", icon: CalendarDays, slug: "Настан" },
-  { label: "Мода", icon: Shirt, slug: "Мода" },
-  { label: "Улица", icon: MapPin, slug: "Улица" },
+  { label: "Корпоративни", icon: Briefcase, slug: "Корпоративни" },
+  { label: "Патувања", icon: Plane, slug: "Патувања" },
+];
+
+const SPECIAL_OFFERINGS = [
+  {
+    label: "Press пакети",
+    sublabel: "5+ слики за медиуми",
+    icon: Package,
+    href: "/press",
+  },
+  {
+    label: "Премиум",
+    sublabel: "Ексклузивни единечни",
+    icon: Star,
+    href: "/premium",
+  },
 ];
 
 const HOW_IT_WORKS = [
@@ -227,11 +240,11 @@ export default async function HomePage() {
           <div className="text-center mb-10">
             <h2 className="text-2xl font-bold mb-2">Прегледај по тема</h2>
             <p className="text-[#888] text-sm">
-              Илјадници слики подредени по категории
+              Слики подредени по категории
             </p>
           </div>
 
-          <div className="grid grid-cols-4 sm:grid-cols-8 gap-3">
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
             {CATEGORIES.map(({ label, icon: Icon, slug }) => (
               <Link
                 key={slug}
@@ -244,6 +257,28 @@ export default async function HomePage() {
                 <span className="text-xs font-medium text-[#888] group-hover:text-[#f0f0f0] transition-colors text-center leading-tight">
                   {label}
                 </span>
+              </Link>
+            ))}
+          </div>
+
+          {/* Посебни понуди */}
+          <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {SPECIAL_OFFERINGS.map(({ label, sublabel, icon: Icon, href }) => (
+              <Link
+                key={href}
+                href={href}
+                className="group flex items-center gap-4 p-5 rounded-card bg-gradient-to-br from-[#141414] to-[#1a1612] border border-[#e8c97e]/20 hover:border-[#e8c97e]/50 hover:from-[#1a1612] transition-all duration-200"
+              >
+                <div className="w-12 h-12 rounded-xl bg-[#e8c97e]/15 flex items-center justify-center flex-shrink-0 group-hover:bg-[#e8c97e]/25 transition-colors">
+                  <Icon size={22} className="text-[#e8c97e]" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-[#f0f0f0] group-hover:text-[#e8c97e] transition-colors">
+                    {label}
+                  </p>
+                  <p className="text-xs text-[#888] mt-0.5">{sublabel}</p>
+                </div>
+                <ArrowRight size={16} className="text-[#888] group-hover:text-[#e8c97e] group-hover:translate-x-1 transition-all flex-shrink-0" />
               </Link>
             ))}
           </div>

@@ -98,18 +98,12 @@ export interface CartItem {
 }
 
 export const GALLERY_CATEGORIES = [
-  "Свадба",
-  "Портрет",
-  "Природа",
-  "Архитектура",
+  "Настани",
   "Спорт",
-  "Настан",
-  "Мода",
-  "Улица",
-  "Деца",
-  "Храна",
-  "Апстракт",
-  "Патување",
+  "Репортажи",
+  "Природа",
+  "Корпоративни",
+  "Патувања",
 ] as const;
 
 export type GalleryCategory = (typeof GALLERY_CATEGORIES)[number];
