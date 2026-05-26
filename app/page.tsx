@@ -28,28 +28,22 @@ export const metadata: Metadata = {
     "Купи оригинални фотографии во висока резолуција — без watermark, веднаш достапни за преземање. Лични, комерцијални и проширени лиценци.",
 };
 
-const CATEGORIES = [
-  { label: "Настани", icon: CalendarDays, slug: "Настани" },
-  { label: "Спорт", icon: Trophy, slug: "Спорт" },
-  { label: "Репортажи", icon: Newspaper, slug: "Репортажи" },
-  { label: "Природа", icon: Leaf, slug: "Природа" },
-  { label: "Корпоративни", icon: Briefcase, slug: "Корпоративни" },
-  { label: "Патувања", icon: Plane, slug: "Патувања" },
-];
+interface NavItem {
+  label: string;
+  icon: typeof CalendarDays;
+  href: string;
+  special?: boolean;
+}
 
-const SPECIAL_OFFERINGS = [
-  {
-    label: "Press пакети",
-    sublabel: "5+ слики за медиуми",
-    icon: Package,
-    href: "/press",
-  },
-  {
-    label: "Премиум",
-    sublabel: "Ексклузивни единечни",
-    icon: Star,
-    href: "/premium",
-  },
+const CATEGORIES: NavItem[] = [
+  { label: "Настани", icon: CalendarDays, href: "/galleries?category=Настани" },
+  { label: "Спорт", icon: Trophy, href: "/galleries?category=Спорт" },
+  { label: "Репортажи", icon: Newspaper, href: "/galleries?category=Репортажи" },
+  { label: "Природа", icon: Leaf, href: "/galleries?category=Природа" },
+  { label: "Корпоративни", icon: Briefcase, href: "/galleries?category=Корпоративни" },
+  { label: "Патувања", icon: Plane, href: "/galleries?category=Патувања" },
+  { label: "Press пакети", icon: Package, href: "/press", special: true },
+  { label: "Премиум", icon: Star, href: "/premium", special: true },
 ];
 
 const HOW_IT_WORKS = [
@@ -240,45 +234,40 @@ export default async function HomePage() {
           <div className="text-center mb-10">
             <h2 className="text-2xl font-bold mb-2">Прегледај по тема</h2>
             <p className="text-[#888] text-sm">
-              Слики подредени по категории
+              Слики подредени по категории и посебни понуди
             </p>
           </div>
 
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-            {CATEGORIES.map(({ label, icon: Icon, slug }) => (
-              <Link
-                key={slug}
-                href={`/galleries?category=${encodeURIComponent(slug)}`}
-                className="group flex flex-col items-center gap-2.5 p-4 rounded-card bg-[#141414] border border-white/[0.06] hover:border-[#e8c97e]/40 hover:bg-[#1a1a1a] transition-all duration-200"
-              >
-                <div className="w-10 h-10 rounded-xl bg-[#e8c97e]/10 flex items-center justify-center group-hover:bg-[#e8c97e]/20 transition-colors">
-                  <Icon size={18} className="text-[#e8c97e]" />
-                </div>
-                <span className="text-xs font-medium text-[#888] group-hover:text-[#f0f0f0] transition-colors text-center leading-tight">
-                  {label}
-                </span>
-              </Link>
-            ))}
-          </div>
-
-          {/* Посебни понуди */}
-          <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {SPECIAL_OFFERINGS.map(({ label, sublabel, icon: Icon, href }) => (
+          <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+            {CATEGORIES.map(({ label, icon: Icon, href, special }) => (
               <Link
                 key={href}
                 href={href}
-                className="group flex items-center gap-4 p-5 rounded-card bg-gradient-to-br from-[#141414] to-[#1a1612] border border-[#e8c97e]/20 hover:border-[#e8c97e]/50 hover:from-[#1a1612] transition-all duration-200"
+                className={
+                  special
+                    ? "group flex flex-col items-center gap-2.5 p-4 rounded-card bg-gradient-to-br from-[#1a1612] to-[#141414] border border-[#e8c97e]/30 hover:border-[#e8c97e]/60 hover:from-[#211c14] transition-all duration-200 relative"
+                    : "group flex flex-col items-center gap-2.5 p-4 rounded-card bg-[#141414] border border-white/[0.06] hover:border-[#e8c97e]/40 hover:bg-[#1a1a1a] transition-all duration-200"
+                }
               >
-                <div className="w-12 h-12 rounded-xl bg-[#e8c97e]/15 flex items-center justify-center flex-shrink-0 group-hover:bg-[#e8c97e]/25 transition-colors">
-                  <Icon size={22} className="text-[#e8c97e]" />
+                {special && (
+                  <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] uppercase tracking-wider font-bold text-[#0a0a0a] bg-[#e8c97e] px-1.5 py-0.5 rounded">
+                    NEW
+                  </span>
+                )}
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                  special
+                    ? "bg-[#e8c97e]/20 group-hover:bg-[#e8c97e]/30"
+                    : "bg-[#e8c97e]/10 group-hover:bg-[#e8c97e]/20"
+                }`}>
+                  <Icon size={18} className={special ? "text-[#e8c97e]" : "text-[#e8c97e]"} />
                 </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-[#f0f0f0] group-hover:text-[#e8c97e] transition-colors">
-                    {label}
-                  </p>
-                  <p className="text-xs text-[#888] mt-0.5">{sublabel}</p>
-                </div>
-                <ArrowRight size={16} className="text-[#888] group-hover:text-[#e8c97e] group-hover:translate-x-1 transition-all flex-shrink-0" />
+                <span className={`text-xs font-medium transition-colors text-center leading-tight ${
+                  special
+                    ? "text-[#f0f0f0] group-hover:text-[#e8c97e]"
+                    : "text-[#888] group-hover:text-[#f0f0f0]"
+                }`}>
+                  {label}
+                </span>
               </Link>
             ))}
           </div>
