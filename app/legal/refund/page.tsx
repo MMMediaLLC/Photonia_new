@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Политика за поврат на средства",
@@ -45,9 +44,9 @@ export default function RefundPage() {
         </p>
         <div className="bg-white/[0.03] border border-white/[0.08] rounded-lg p-4 mb-4">
           <p className="text-sm text-[#f0f0f0] italic">
-            "Се согласувам дека со преземање на дигиталната фотографија, откажувам од правото на
+            &ldquo;Се согласувам дека со преземање на дигиталната фотографија, откажувам од правото на
             одустанок во рок од 14 дена, согласно членот 16(м) од EU Consumer Rights Directive.
-            Разбирам дека поврат на средства не е можен откако фотографијата ќе биде преземена."
+            Разбирам дека поврат на средства не е можен откако фотографијата ќе биде преземена.&rdquo;
           </p>
         </div>
         <p>
