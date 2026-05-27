@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type Dispatch, type SetStateAction } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -205,9 +205,9 @@ function AuthPanel({
   paying,
 }: {
   tab: AuthTab;
-  setTab: (t: AuthTab) => void;
+  setTab: Dispatch<SetStateAction<AuthTab>>;
   canPay: boolean;
-  onSuccess: () => void;
+  onSuccess: () => void | Promise<void>;
   paying: boolean;
 }) {
   return (
@@ -232,16 +232,16 @@ function AuthPanel({
       </div>
 
       {tab === "register" ? (
-        <RegisterForm onSuccess={onSuccess} paying={paying} />
+        <RegisterForm onSuccess={onSuccess} paying={paying} canPay={canPay} />
       ) : (
-        <LoginForm onSuccess={onSuccess} paying={paying} />
+        <LoginForm onSuccess={onSuccess} paying={paying} canPay={canPay} />
       )}
     </div>
   );
 }
 
 // ── Register form ────────────────────────────────────────────────────
-function RegisterForm({ onSuccess, paying }: { onSuccess: () => void; paying: boolean }) {
+function RegisterForm({ onSuccess, paying, canPay }: { onSuccess: () => void | Promise<void>; paying: boolean; canPay: boolean }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -310,7 +310,7 @@ function RegisterForm({ onSuccess, paying }: { onSuccess: () => void; paying: bo
             <Link href="/legal/privacy" target="_blank" className="text-[#e8c97e] hover:underline">Приватноста</Link>
           </span>
         </label>
-        <button type="submit" disabled={busy || !agreed}
+        <button type="submit" disabled={busy || !agreed || !canPay}
           className="w-full flex items-center justify-center gap-2 bg-[#e8c97e] text-[#0a0a0a] font-semibold py-2.5 rounded-card hover:bg-[#d4b46a] transition-colors disabled:opacity-50 text-sm">
           {busy ? <><Loader2 size={14} className="animate-spin" /> Обработување...</> : "Регистрирај се и плати"}
         </button>
@@ -320,7 +320,7 @@ function RegisterForm({ onSuccess, paying }: { onSuccess: () => void; paying: bo
 }
 
 // ── Login form ───────────────────────────────────────────────────────
-function LoginForm({ onSuccess, paying }: { onSuccess: () => void; paying: boolean }) {
+function LoginForm({ onSuccess, paying, canPay }: { onSuccess: () => void | Promise<void>; paying: boolean; canPay: boolean }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -369,7 +369,7 @@ function LoginForm({ onSuccess, paying }: { onSuccess: () => void; paying: boole
           className="w-full bg-[#0a0a0a] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-[#f0f0f0] placeholder:text-[#555] focus:outline-none focus:border-[#e8c97e]/50" />
         <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="Лозинка"
           className="w-full bg-[#0a0a0a] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-[#f0f0f0] placeholder:text-[#555] focus:outline-none focus:border-[#e8c97e]/50" />
-        <button type="submit" disabled={busy}
+        <button type="submit" disabled={busy || !canPay}
           className="w-full flex items-center justify-center gap-2 bg-[#e8c97e] text-[#0a0a0a] font-semibold py-2.5 rounded-card hover:bg-[#d4b46a] transition-colors disabled:opacity-50 text-sm">
           {busy ? <><Loader2 size={14} className="animate-spin" /> Обработување...</> : "Најави се и плати"}
         </button>
