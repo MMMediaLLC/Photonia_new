@@ -9,7 +9,8 @@ function verifySignature(body: string, signature: string): boolean {
   try {
     const hmac = crypto.createHmac("sha256", secret);
     const digest = hmac.update(body).digest("hex");
-    const sigBuf = Buffer.from(signature);
+    // Normalise to lowercase so uppercase hex from LS doesn't cause a mismatch
+    const sigBuf = Buffer.from(signature.toLowerCase());
     const digestBuf = Buffer.from(digest);
     if (sigBuf.length !== digestBuf.length) return false;
     return crypto.timingSafeEqual(sigBuf, digestBuf);
@@ -62,18 +63,19 @@ export async function POST(req: NextRequest) {
 
   console.log("[LS webhook]", { lsOrderId, buyerEmail, userId, total, photoIds, licenses });
 
-  // Resolve buyer_id — prefer explicit user_id, fallback to email lookup
+  // Resolve buyer_id — prefer explicit user_id, fallback to auth email lookup
   let buyerId: string | null = userId ?? null;
   if (!buyerId && buyerEmail) {
-    console.warn("[LS webhook] No user_id in custom_data, trying email lookup for:", buyerEmail);
-    const { data: existingUser } = await supabase
-      .from("users")
-      .select("id")
-      .eq("email", buyerEmail)
-      .maybeSingle();
-    buyerId = existingUser?.id ?? null;
+    console.warn("[LS webhook] No user_id in custom_data, trying auth email lookup for:", buyerEmail);
+    try {
+      const { data: { users: authUsers } } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+      const found = authUsers.find((u) => u.email === buyerEmail);
+      buyerId = found?.id ?? null;
+    } catch (err) {
+      console.error("[LS webhook] Auth user lookup failed:", err);
+    }
     if (!buyerId) {
-      console.error("[LS webhook] No user found for email:", buyerEmail);
+      console.error("[LS webhook] No auth user found for email:", buyerEmail);
     }
   }
 

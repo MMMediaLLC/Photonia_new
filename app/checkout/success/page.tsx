@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { CheckCircle, Download, ShoppingBag } from "lucide-react";
+import { ClearCart } from "@/components/checkout/ClearCart";
 
 export default function CheckoutSuccessPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="max-w-md w-full text-center">
+        <ClearCart />
         <div className="w-20 h-20 rounded-full bg-[#4caf7d]/15 flex items-center justify-center mx-auto mb-6">
           <CheckCircle size={40} className="text-[#4caf7d]" />
         </div>

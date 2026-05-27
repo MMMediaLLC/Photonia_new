@@ -23,7 +23,7 @@ export default async function AccountOrdersPage() {
         photo:photos(title, gallery:galleries(title, slug))
       )
     `)
-    .eq("buyer_id", user.id)
+    .or(`buyer_id.eq.${user.id},buyer_email.eq.${user.email}`)
     .order("created_at", { ascending: false });
 
   return (

@@ -28,7 +28,7 @@ export default async function DownloadsPage() {
   const { data: orders } = await supabase
     .from("orders")
     .select(`*, order_items(*, photo:photos(title, cloudinary_public_id, gallery:galleries(title, slug)))`)
-    .eq("buyer_id", user.id)
+    .or(`buyer_id.eq.${user.id},buyer_email.eq.${user.email}`)
     .eq("status", "paid")
     .order("created_at", { ascending: false });
 
