@@ -33,6 +33,12 @@ export default function CheckoutPage() {
       setUser(data.user ?? null);
       setAuthLoading(false);
     });
+    // Keep user state in sync — fires when email confirmation lands back on /checkout
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setAuthLoading(false);
+    });
+    return () => sub.subscription.unsubscribe();
   }, []);
 
   async function proceedToPayment() {
@@ -257,7 +263,7 @@ function RegisterForm({ onSuccess, paying, canPay }: { onSuccess: () => void | P
       password,
       options: {
         data: { name, role: "buyer" },
-        emailRedirectTo: `${window.location.origin}/checkout`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/checkout`,
       },
     });
     if (error) {
