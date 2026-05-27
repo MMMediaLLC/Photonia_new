@@ -200,11 +200,13 @@ function LoggedInPanel({
 function AuthPanel({
   tab,
   setTab,
+  canPay,
   onSuccess,
   paying,
 }: {
   tab: AuthTab;
   setTab: (t: AuthTab) => void;
+  canPay: boolean;
   onSuccess: () => void;
   paying: boolean;
 }) {
