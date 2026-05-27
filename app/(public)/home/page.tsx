@@ -6,9 +6,9 @@ import GalleryCard from "@/components/gallery/GalleryCard";
 import type { Gallery } from "@/lib/types";
 
 export const metadata: Metadata = {
-  title: "Photonia — Фото Пазар",
+  title: "Photonia — Фотографии од македонски настани",
   description:
-    "Купи уникатни фотографии директно од македонски фотографи.",
+    "Оригинални HD фотографии од македонски јавни настани. Лична и комерцијална лиценца. Инстант преземање без претплата.",
 };
 
 async function getFeaturedGalleries(): Promise<Gallery[]> {
@@ -53,12 +53,17 @@ export default async function HomePage() {
           style={{ backgroundImage: "radial-gradient(circle at 50% 50%, #e8c97e 0%, transparent 70%)" }}
         />
         <div className="relative z-20 text-center max-w-3xl mx-auto">
-          <h1 className="text-4xl sm:text-6xl font-bold tracking-tight mb-4 leading-tight">
-            Уникатни фотографии од{" "}
-            <span className="text-[#e8c97e]">македонски фотографи</span>
+          <p className="text-xs uppercase tracking-widest text-[#e8c97e] mb-5">Македонски настани во HD</p>
+          <h1 className="text-4xl sm:text-6xl font-bold tracking-tight mb-5 leading-tight">
+            Фотографии кои{" "}
+            <span className="text-[#e8c97e]">раскажуваат приказна</span>
           </h1>
-          <p className="text-lg text-[#888] mb-10 max-w-xl mx-auto">
-            Прегледај галерии, избери фотографија, купи лиценца и преземи оригинал.
+          <p className="text-lg text-[#888] mb-4 max-w-xl mx-auto leading-relaxed">
+            Оригинални HD снимки од политички, спортски, општествени и културни настани во Македонија.
+            Купи лиценца, преземи оригинал без watermark.
+          </p>
+          <p className="text-sm text-[#555] mb-10">
+            Без претплата. Без скриени такси. Инстант преземање.
           </p>
 
           {/* Search bar */}
@@ -128,18 +133,37 @@ export default async function HomePage() {
         )}
       </section>
 
-      {/* CTA banner */}
+      {/* Trust bar */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-16">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { label: "Оригинална резолуција", desc: "Без компресија, без watermark" },
+            { label: "Две лиценци", desc: "Лична и Комерцијална" },
+            { label: "Инстант преземање", desc: "Веднаш по плаќање" },
+            { label: "Без претплата", desc: "Плаќаш само за тоа што купуваш" },
+          ].map((item) => (
+            <div key={item.label} className="bg-[#141414] border border-white/[0.06] rounded-card p-4 text-center">
+              <p className="text-sm font-semibold text-[#f0f0f0] mb-1">{item.label}</p>
+              <p className="text-xs text-[#666]">{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Press CTA */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-24">
         <div className="rounded-card bg-[#141414] border border-white/[0.08] p-10 text-center">
-          <h2 className="text-2xl font-bold mb-3">Ти си фотограф?</h2>
+          <p className="text-xs uppercase tracking-widest text-[#e8c97e] mb-3">За медиуми и агенции</p>
+          <h2 className="text-2xl font-bold mb-3">Ти треба повеќе снимки?</h2>
           <p className="text-[#888] mb-6 max-w-md mx-auto">
-            Придружи се на Photonia, продавај твои фотографии и задржи 80% од приходот.
+            Прес пакети и custom понуди за редакции, општини, агенции и политички партии.
+            Контактирај за ретајнер или масовна нарачка.
           </p>
           <Link
-            href="/register"
+            href="/press"
             className="inline-flex items-center gap-2 bg-[#e8c97e] text-[#0a0a0a] font-semibold px-6 py-3 rounded-card hover:bg-[#d4b46a] transition-colors"
           >
-            Стани фотограф <ArrowRight size={16} />
+            За медиуми <ArrowRight size={16} />
           </Link>
         </div>
       </section>

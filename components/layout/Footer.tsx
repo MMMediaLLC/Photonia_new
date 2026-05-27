@@ -37,6 +37,9 @@ export default function Footer() {
             <Link href="/press" className="text-[#f0f0f0] hover:text-[#e8c97e] transition-colors">
               За медиуми
             </Link>
+            <Link href="/about" className="text-[#f0f0f0] hover:text-[#e8c97e] transition-colors">
+              За нас
+            </Link>
           </div>
         </div>
 
