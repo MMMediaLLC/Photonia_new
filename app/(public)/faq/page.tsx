@@ -65,6 +65,19 @@ const FAQS = [
   },
 ];
 
+function linkify(text: string) {
+  const parts = text.split(/(\/[a-z][a-z0-9/-]*)/g);
+  return parts.map((part, i) =>
+    part.startsWith("/") ? (
+      <Link key={i} href={part} className="text-[#e8c97e] hover:underline">
+        {part}
+      </Link>
+    ) : (
+      part
+    )
+  );
+}
+
 export default function FAQPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-16">
@@ -93,17 +106,7 @@ export default function FAQPage() {
               </svg>
             </summary>
             <div className="px-5 pb-5 pt-1 ml-12 text-sm text-[#888] leading-relaxed whitespace-pre-line">
-              {a.includes("/legal/") || a.includes("/takedown") ? (
-                <span>
-                  {a.split(/(\/legal\/[a-z-]+|\/takedown)/g).map((part, j) =>
-                    part.startsWith("/") ? (
-                      <Link key={j} href={part} className="text-[#e8c97e] hover:underline">{part}</Link>
-                    ) : (
-                      part
-                    )
-                  )}
-                </span>
-              ) : a}
+              {linkify(a)}
             </div>
           </details>
         ))}

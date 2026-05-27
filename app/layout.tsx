@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { Toaster } from "@/components/ui/Toaster";
+import CookieBanner from "@/components/ui/CookieBanner";
 
 const inter = Inter({
   subsets: ["latin", "cyrillic", "cyrillic-ext"],
@@ -37,6 +38,7 @@ export default function RootLayout({
         <CartProvider>
           {children}
           <Toaster />
+          <CookieBanner />
         </CartProvider>
       </body>
     </html>

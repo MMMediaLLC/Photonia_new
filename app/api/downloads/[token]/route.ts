@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
-import { v2 as cloudinary } from "cloudinary";
-
-cloudinary.config({
-  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+import { getDownloadUrl } from "@/lib/cloudinary";
 
 export async function GET(
   _req: NextRequest,
@@ -37,15 +31,8 @@ export async function GET(
     return NextResponse.json({ error: "Photo not found" }, { status: 404 });
   }
 
-  // Generate signed Cloudinary URL (1 hour expiry)
-  const signedUrl = cloudinary.url(publicId, {
-    secure: true,
-    sign_url: true,
-    expires_at: Math.floor(Date.now() / 1000) + 3600,
-    resource_type: "image",
-  });
+  const signedUrl = getDownloadUrl(publicId, 3600);
 
-  // Increment download count
   await supabase
     .from("order_items")
     .update({ download_count: item.download_count + 1 })

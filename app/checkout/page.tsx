@@ -23,6 +23,10 @@ export default function CheckoutPage() {
   const [authLoading, setAuthLoading] = useState(true);
   const [tab, setTab] = useState<AuthTab>("register");
   const [paying, setPaying] = useState(false);
+  const [refundAgreed, setRefundAgreed] = useState(false);
+  const [editorialAgreed, setEditorialAgreed] = useState(false);
+
+  const canPay = refundAgreed && editorialAgreed;
 
   useEffect(() => {
     const supabase = createClient();
@@ -32,9 +36,12 @@ export default function CheckoutPage() {
     });
   }, []);
 
-  // ── Proceed to LemonSqueezy ─────────────────────────────────────────
   async function proceedToPayment() {
     if (!items.length) return;
+    if (!canPay) {
+      toast("Прифати ги двете изјави за да продолжиш.", "error");
+      return;
+    }
     setPaying(true);
 
     const payload = {
@@ -91,7 +98,41 @@ export default function CheckoutPage() {
 
         <div className="grid md:grid-cols-[1fr_340px] gap-6">
           {/* Left: Auth or Logged-in payment */}
-          <div>
+          <div className="flex flex-col gap-4">
+            {/* Legal disclosures — shown to all users before payment */}
+            <div className="bg-[#141414] border border-white/[0.08] rounded-card p-5 flex flex-col gap-4">
+              <div className="border border-amber-700/30 bg-amber-950/10 rounded-lg p-4">
+                <p className="text-xs font-semibold text-amber-400 mb-2">Editorial напомена</p>
+                <p className="text-xs text-[#aaa] leading-relaxed mb-3">
+                  Фотографиите со ознака Editorial Only не смеат да се употребат во рекламен
+                  контекст кој имплицира поддршка од прикажаното лице. Важи за двете лиценци.{" "}
+                  <Link href="/legal/editorial-notice" target="_blank" className="text-amber-400 hover:underline">
+                    Прочитај повеќе
+                  </Link>.
+                </p>
+                <label className="flex items-start gap-2.5 cursor-pointer">
+                  <input type="checkbox" checked={editorialAgreed}
+                    onChange={(e) => setEditorialAgreed(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 accent-[#e8c97e] cursor-pointer" />
+                  <span className="text-xs text-[#ccc]">
+                    Ги прочитав и ги прифаќам editorial ограничувањата.
+                  </span>
+                </label>
+              </div>
+              <label className="flex items-start gap-2.5 cursor-pointer">
+                <input type="checkbox" checked={refundAgreed}
+                  onChange={(e) => setRefundAgreed(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 accent-[#e8c97e] cursor-pointer" />
+                <span className="text-xs text-[#888] leading-relaxed">
+                  Се согласувам дека со преземање на фотографијата, откажувам од правото
+                  на одустанок во рок од 14 дена, согласно членот 16(м) од EU Consumer Rights Directive.{" "}
+                  <Link href="/legal/refund" target="_blank" className="text-[#e8c97e] hover:underline">
+                    Политика за поврат
+                  </Link>.
+                </span>
+              </label>
+            </div>
+
             {authLoading ? (
               <div className="flex items-center justify-center py-20">
                 <Loader2 size={28} className="animate-spin text-[#e8c97e]" />
@@ -100,12 +141,14 @@ export default function CheckoutPage() {
               <LoggedInPanel
                 email={user.email ?? ""}
                 paying={paying}
+                canPay={canPay}
                 onPay={proceedToPayment}
               />
             ) : (
               <AuthPanel
                 tab={tab}
                 setTab={setTab}
+                canPay={canPay}
                 onSuccess={proceedToPayment}
                 paying={paying}
               />
@@ -126,15 +169,14 @@ export default function CheckoutPage() {
 function LoggedInPanel({
   email,
   paying,
+  canPay,
   onPay,
 }: {
   email: string;
   paying: boolean;
+  canPay: boolean;
   onPay: () => void;
 }) {
-  const [refundAgreed, setRefundAgreed] = useState(false);
-  const [editorialAgreed, setEditorialAgreed] = useState(false);
-
   return (
     <div className="bg-[#141414] border border-white/[0.08] rounded-card p-6 flex flex-col gap-5">
       <h2 className="text-lg font-semibold">Потврди нарачка</h2>
@@ -142,52 +184,9 @@ function LoggedInPanel({
         <p className="text-xs text-[#888] mb-0.5">Купуваш како</p>
         <p className="text-sm font-medium text-[#f0f0f0]">{email}</p>
       </div>
-
-      {/* Editorial disclaimer */}
-      <div className="border border-amber-700/30 bg-amber-950/10 rounded-lg p-4">
-        <p className="text-xs font-semibold text-amber-400 mb-2">Editorial напомена</p>
-        <p className="text-xs text-[#aaa] leading-relaxed mb-3">
-          Фотографиите со ознака Editorial Only не смеат да се употребат во рекламен
-          контекст кој имплицира поддршка од прикажаното лице. Важи за двете лиценци.{" "}
-          <Link href="/legal/editorial-notice" target="_blank" className="text-amber-400 hover:underline">
-            Прочитај повеќе
-          </Link>
-          .
-        </p>
-        <label className="flex items-start gap-2.5 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={editorialAgreed}
-            onChange={(e) => setEditorialAgreed(e.target.checked)}
-            className="mt-0.5 w-4 h-4 accent-[#e8c97e] cursor-pointer"
-          />
-          <span className="text-xs text-[#ccc]">
-            Ги прочитав и ги прифаќам editorial ограничувањата.
-          </span>
-        </label>
-      </div>
-
-      {/* Refund waiver */}
-      <label className="flex items-start gap-2.5 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={refundAgreed}
-          onChange={(e) => setRefundAgreed(e.target.checked)}
-          className="mt-0.5 w-4 h-4 accent-[#e8c97e] cursor-pointer"
-        />
-        <span className="text-xs text-[#888] leading-relaxed">
-          Се согласувам дека со преземање на дигиталната фотографија, откажувам од правото
-          на одустанок во рок од 14 дена, согласно членот 16(м) од EU Consumer Rights Directive.{" "}
-          <Link href="/legal/refund" target="_blank" className="text-[#e8c97e] hover:underline">
-            Политика за поврат
-          </Link>
-          .
-        </span>
-      </label>
-
       <button
         onClick={onPay}
-        disabled={paying || !refundAgreed || !editorialAgreed}
+        disabled={paying || !canPay}
         className="w-full flex items-center justify-center gap-2 bg-[#e8c97e] text-[#0a0a0a] font-semibold py-3 rounded-card hover:bg-[#d4b46a] transition-colors disabled:opacity-40 text-sm"
       >
         {paying ? <><Loader2 size={14} className="animate-spin" /> Пренасочување...</> : "🔒 Плати безбедно"}

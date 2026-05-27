@@ -51,5 +51,5 @@ export function generateToken(length = 32) {
 export function getCloudinaryWatermarkedUrl(publicId: string, cloudName: string) {
   const wm = "l_text:Arial_60_bold:PHOTONIA%20photonia.mk,o_35,co_white,a_-30,e_shadow:10";
   const resize = "w_1200,q_60,c_limit";
-  return `https://res.cloudinary.com/${cloudName}/image/upload/${resize}/${wm},fl_tiled/${publicId}`;
+  return `https://res.cloudinary.com/${cloudName}/image/upload/${resize}/${wm}/fl_layer_apply,fl_tiled/${publicId}`;
 }
