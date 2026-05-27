@@ -1,7 +1,7 @@
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import Link from "next/link";
-import { Download, ShoppingBag } from "lucide-react";
+import { Download, ShoppingBag, User } from "lucide-react";
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -15,6 +15,9 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
           </Link>
           <Link href="/account/orders" className="flex items-center gap-1.5 text-sm text-[#888] hover:text-[#f0f0f0] transition-colors">
             <ShoppingBag size={14} /> Нарачки
+          </Link>
+          <Link href="/account/profile" className="flex items-center gap-1.5 text-sm text-[#888] hover:text-[#f0f0f0] transition-colors">
+            <User size={14} /> Профил
           </Link>
         </nav>
         {children}
