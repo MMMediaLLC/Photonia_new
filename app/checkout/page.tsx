@@ -23,10 +23,9 @@ export default function CheckoutPage() {
   const [authLoading, setAuthLoading] = useState(true);
   const [tab, setTab] = useState<AuthTab>("register");
   const [paying, setPaying] = useState(false);
-  const [refundAgreed, setRefundAgreed] = useState(false);
   const [editorialAgreed, setEditorialAgreed] = useState(false);
 
-  const canPay = refundAgreed && editorialAgreed;
+  const canPay = editorialAgreed;
 
   useEffect(() => {
     const supabase = createClient();
@@ -39,7 +38,7 @@ export default function CheckoutPage() {
   async function proceedToPayment() {
     if (!items.length) return;
     if (!canPay) {
-      toast("Прифати ги двете изјави за да продолжиш.", "error");
+      toast("Прифати ја editorial изјавата за да продолжиш.", "error");
       return;
     }
     setPaying(true);
@@ -119,18 +118,7 @@ export default function CheckoutPage() {
                   </span>
                 </label>
               </div>
-              <label className="flex items-start gap-2.5 cursor-pointer">
-                <input type="checkbox" checked={refundAgreed}
-                  onChange={(e) => setRefundAgreed(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 accent-[#e8c97e] cursor-pointer" />
-                <span className="text-xs text-[#888] leading-relaxed">
-                  Се согласувам дека со преземање на фотографијата, откажувам од правото
-                  на одустанок во рок од 14 дена, согласно членот 16(м) од EU Consumer Rights Directive.{" "}
-                  <Link href="/legal/refund" target="_blank" className="text-[#e8c97e] hover:underline">
-                    Политика за поврат
-                  </Link>.
-                </span>
-              </label>
+
             </div>
 
             {authLoading ? (
@@ -264,18 +252,31 @@ function RegisterForm({ onSuccess, paying, canPay }: { onSuccess: () => void | P
     if (!agreed) { toast("Прифати ги условите за да продолжиш", "error"); return; }
     setLoading(true);
     const supabase = createClient();
-    const { error } = await supabase.auth.signUp({
+    const { data: signUpData, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name, role: "buyer" } },
+      options: {
+        data: { name, role: "buyer" },
+        emailRedirectTo: `${window.location.origin}/checkout`,
+      },
     });
     if (error) {
       toast(error.message, "error");
       setLoading(false);
       return;
     }
-    // User is now logged in — proceed to payment
-    onSuccess();
+    if (signUpData.session) {
+      // Auto-confirmed (e.g. dev mode) — proceed directly to payment
+      onSuccess();
+    } else {
+      // Supabase sent a confirmation email; we cannot pay until it is confirmed.
+      // The emailRedirectTo above will bring the user back to /checkout with cart intact.
+      toast(
+        "Испративме е-пошта за потврда. Кликни на линкот и ќе се вратиш овде за да платиш.",
+        "info"
+      );
+      setLoading(false);
+    }
   }
 
   const busy = loading || paying;
