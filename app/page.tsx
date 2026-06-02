@@ -25,7 +25,7 @@ import type { Gallery } from "@/lib/types";
 export const metadata: Metadata = {
   title: "Photonia — Купи професионални фотографии во HD",
   description:
-    "Купи оригинални фотографии во висока резолуција — без watermark, веднаш достапни за преземање. Лична и комерцијална лиценца.",
+    "Купи оригинални фотографии во висока резолуција — без воден жиг, веднаш достапни за преземање. Лична и комерцијална лиценца.",
 };
 
 const CATEGORIES = [
@@ -50,19 +50,19 @@ const HOW_IT_WORKS = [
     icon: ShoppingCart,
     step: "02",
     title: "Избери лиценца",
-    desc: "Лична за себе, Комерцијална за бизнис, Проширена за неограничена употреба.",
+    desc: "Лична за приватна употреба или Комерцијална за бизнис.",
   },
   {
     icon: CheckCircle,
     step: "03",
-    title: "Плати безбедно",
-    desc: "Плаќање со картичка преку LemonSqueezy. Без регистрација и без претплата.",
+    title: "Регистрирај се и плати",
+    desc: "Создади профил и плати безбедно со картичка преку LemonSqueezy.",
   },
   {
     icon: Download,
     step: "04",
     title: "Преземи HD оригинал",
-    desc: "Веднаш ja симнуваш сликата во висока резолуција — без watermark.",
+    desc: "Веднаш ја симнуваш фотографијата во висока резолуција, без воден жиг.",
   },
 ];
 
@@ -165,7 +165,7 @@ export default async function HomePage() {
           {/* Content */}
           <div className="relative z-10 text-center max-w-4xl mx-auto px-4">
             <span className="inline-block text-xs font-semibold tracking-[0.2em] uppercase text-[#e8c97e] mb-5 px-3 py-1.5 border border-[#e8c97e]/30 rounded-full">
-              HD фотографии · Без watermark
+              HD фотографии · Без воден жиг
             </span>
             <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight mb-6 leading-[1.05]">
               Уникатни фотографии
@@ -173,8 +173,8 @@ export default async function HomePage() {
               <span className="text-[#e8c97e]">во висока резолуција</span>
             </h1>
             <p className="text-lg sm:text-xl text-[#888] mb-10 max-w-2xl mx-auto leading-relaxed">
-              Најди ja сликата што ти треба, плати безбедно и веднаш ja преземи
-              во оригинална HD резолуција — <strong className="text-[#f0f0f0]">без watermark</strong>.
+              Најди ја сликата што ти треба, плати безбедно и веднаш преземи ја
+              во оригинална HD резолуција — <strong className="text-[#f0f0f0]">без воден жиг</strong>.
             </p>
 
             {/* Search */}
@@ -190,7 +190,7 @@ export default async function HomePage() {
                 <input
                   type="text"
                   name="q"
-                  placeholder="Пребарај галерии, настани, ключни зборови..."
+                  placeholder="Пребарај галерии, настани, клучни зборови..."
                   className="w-full bg-[#141414]/90 backdrop-blur border border-white/[0.1] rounded-card pl-10 pr-4 py-4 text-sm text-[#f0f0f0] placeholder:text-[#555] focus:outline-none focus:border-[#e8c97e]/50 transition-colors"
                 />
               </div>
@@ -205,7 +205,7 @@ export default async function HomePage() {
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-[#888]">
               <span className="flex items-center gap-1.5">
                 <CheckCircle size={13} className="text-[#e8c97e]" />
-                HD оригинал без watermark
+                HD оригинал без воден жиг
               </span>
               <span className="flex items-center gap-1.5">
                 <CheckCircle size={13} className="text-[#e8c97e]" />
@@ -313,7 +313,7 @@ export default async function HomePage() {
               </p>
               <h2 className="text-2xl font-bold mb-3">Од клик до HD слика — за 2 минути</h2>
               <p className="text-[#888] text-sm max-w-lg mx-auto">
-                Без регистрација, без месечна претплата, без сложени услови.
+                Едноставно, безбедно и без месечна претплата.
               </p>
             </div>
 
@@ -412,11 +412,11 @@ export default async function HomePage() {
                 За тебе
               </p>
               <h2 className="text-2xl sm:text-3xl font-bold mb-4">
-                Се позна на некоja слика?
+                Се препозна на некоја слика?
               </h2>
               <p className="text-[#888] mb-8 max-w-lg mx-auto leading-relaxed">
-                Купи ja својата фотографија од настан, концерт или спортска средба
-                во <strong className="text-[#f0f0f0]">HD резолуција без watermark</strong>.
+                Купи ја својата фотографија од настан, концерт или спортска средба
+                во <strong className="text-[#f0f0f0]">HD резолуција без воден жиг</strong>.
                 Без претплата, без сложени услови.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">

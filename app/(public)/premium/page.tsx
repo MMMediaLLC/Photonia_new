@@ -9,11 +9,11 @@ export const metadata: Metadata = {
 };
 
 const FEATURES = [
-  "Ексклузивни фотографии — само едно копирaње во продажба",
-  "Највисока резолуција и квалитет",
-  "Уникатни моменти кои не се повторуваат",
-  "Целосна комерцијална лиценца вклучена",
-  "Сертификат за автентичност",
+  "Ексклузивни фотографии — само едно копие во продажба.",
+  "Највисока резолуција и квалитет.",
+  "Уникатни моменти кои не се повторуваат.",
+  "Целосна комерцијална лиценца вклучена.",
+  "Сертификат за автентичност.",
 ];
 
 export default function PremiumPage() {
@@ -31,7 +31,7 @@ export default function PremiumPage() {
           Ексклузивни единечни фотографии
         </h1>
         <p className="text-[#888] text-lg max-w-2xl mx-auto leading-relaxed">
-          Уникатни, високo-квалитетни професионални слики — селектирани за оние кои бараат
+          Уникатни, висококвалитетни професионални слики — селектирани за оние кои бараат
           нешто <strong className="text-[#f0f0f0]">посебно</strong>.
         </p>
       </div>
@@ -40,7 +40,7 @@ export default function PremiumPage() {
       <div className="bg-gradient-to-br from-[#141414] to-[#1a1612] border border-[#e8c97e]/20 rounded-card p-6 sm:p-8 mb-10">
         <div className="flex items-center gap-2 mb-5">
           <Sparkles size={18} className="text-[#e8c97e]" />
-          <h2 className="text-lg font-bold">Што добивaш со премиум:</h2>
+          <h2 className="text-lg font-bold">Што добиваш со премиум:</h2>
         </div>
         <ul className="flex flex-col gap-3">
           {FEATURES.map((b, i) => (
@@ -55,10 +55,10 @@ export default function PremiumPage() {
       {/* Coming soon */}
       <div className="text-center py-12 border border-dashed border-white/10 rounded-card mb-10">
         <p className="text-[#888] mb-4">
-          Премиум селекцијата наскоро ќе биде достапна за директна купи.
+          Премиум селекцијата наскоро ќе биде достапна за директна нарачка.
         </p>
         <p className="text-sm text-[#666]">
-          Засега, за интерес контактирaj не директно.
+          Засега, за интерес контактирајте нѐ директно.
         </p>
       </div>
 
