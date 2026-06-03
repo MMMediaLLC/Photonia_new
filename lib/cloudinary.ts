@@ -1,7 +1,13 @@
 import { v2 as cloudinary } from "cloudinary";
 
+// cloud_name is NOT a secret — it appears in every delivery URL — so we
+// safely fall back to the public var. On Vercel only NEXT_PUBLIC_… is set,
+// which is why server-side signed downloads were failing.
+const CLOUD_NAME =
+  process.env.CLOUDINARY_CLOUD_NAME ?? process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  cloud_name: CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
   secure: true,

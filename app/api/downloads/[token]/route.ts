@@ -16,11 +16,13 @@ export async function GET(
   { params }: { params: { token: string } }
 ) {
   // ── Env sanity — fail fast & loud, never a raw 500 ──────────────────
-  if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_SECRET) {
+  const cloudName =
+    process.env.CLOUDINARY_CLOUD_NAME ?? process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  if (!cloudName || !process.env.CLOUDINARY_API_SECRET) {
     console.error(
       "[downloads] Cloudinary not configured on this environment",
       {
-        hasCloud: !!process.env.CLOUDINARY_CLOUD_NAME,
+        hasCloud: !!cloudName,
         hasSecret: !!process.env.CLOUDINARY_API_SECRET,
       }
     );
