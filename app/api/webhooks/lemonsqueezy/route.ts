@@ -322,7 +322,7 @@ export async function POST(req: NextRequest) {
 
             <hr style="border:0;border-top:1px solid #eee;margin:24px 0 16px;" />
             <p style="color:#999;font-size:12px;line-height:1.7;">
-              <strong>Photonia</strong> — Македонски Фото Пазар<br/>
+              <strong>Photonia</strong> — Платформа за дигитални фотографии<br/>
               За технички проблем или повторно преземање:
               <a href="mailto:support@photonia.mk" style="color:#888;">support@photonia.mk</a><br/>
               Реф. бр. за поддршка: <strong>#${escape(orderRef)}</strong>

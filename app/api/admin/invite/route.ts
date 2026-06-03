@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
 
           <hr style="border:0;border-top:1px solid #eee;margin:24px 0 16px;" />
           <p style="color:#999;font-size:12px;line-height:1.7;">
-            <strong>Photonia.mk</strong> — Македонски Фото Пазар<br/>
+            <strong>Photonia.mk</strong> — Платформа за дигитални фотографии<br/>
             Прашања: <a href="mailto:info@photonia.mk" style="color:#888;">info@photonia.mk</a><br/>
             Издавач: M&amp;M Media
           </p>

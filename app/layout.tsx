@@ -14,7 +14,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "Photonia — Фото Пазар",
+    default: "Photonia — Платформа за дигитални фотографии",
     template: "%s | Photonia",
   },
   description:
