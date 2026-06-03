@@ -43,26 +43,26 @@ const HOW_IT_WORKS = [
   {
     icon: Search,
     step: "01",
-    title: "Прегледај",
-    desc: "Истражи галерии и пронајди ја сликата што ти треба.",
+    title: "Најди ја сликата",
+    desc: "Пребарувај по настан, тема или фотограф и отвори ја галеријата.",
   },
   {
     icon: ShoppingCart,
     step: "02",
     title: "Избери лиценца",
-    desc: "Лична за приватна употреба или Комерцијална за бизнис.",
+    desc: "Лична за приватна употреба или Комерцијална за деловна намена.",
   },
   {
     icon: CheckCircle,
     step: "03",
-    title: "Регистрирај се и плати",
-    desc: "Создади профил и плати безбедно со картичка преку LemonSqueezy.",
+    title: "Плати безбедно",
+    desc: "Внеси е-пошта и плати со картичка. Сметката се создава автоматски.",
   },
   {
     icon: Download,
     step: "04",
     title: "Преземи HD оригинал",
-    desc: "Веднаш ја симнуваш фотографијата во висока резолуција, без воден жиг.",
+    desc: "Линкови за преземање стасуваат во твојата е-пошта веднаш по плаќањето.",
   },
 ];
 
@@ -164,9 +164,6 @@ export default async function HomePage() {
 
           {/* Content */}
           <div className="relative z-10 text-center max-w-4xl mx-auto px-4">
-            <span className="inline-block text-xs font-semibold tracking-[0.2em] uppercase text-[#e8c97e] mb-5 px-3 py-1.5 border border-[#e8c97e]/30 rounded-full">
-              HD фотографии · Без воден жиг
-            </span>
             <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight mb-6 leading-[1.05]">
               Уникатни фотографии
               <br />
@@ -225,18 +222,19 @@ export default async function HomePage() {
         {/* ═══ КАТЕГОРИИ ═══ */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
           <div className="text-center mb-10">
-            <h2 className="text-2xl font-bold mb-2">Прегледај по тема</h2>
+            <h2 className="text-2xl font-bold mb-2">Прегледај по категорија</h2>
             <p className="text-[#888] text-sm">
-              Слики подредени по категории и посебни понуди
+              Изберете категорија за да ги видите релевантните галерии.
             </p>
           </div>
 
-          <div className="flex gap-3 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-8 snap-x snap-mandatory">
+          {/* 2×4 на мобилен, 4×2 на таблет, 8 во ред на десктоп */}
+          <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 gap-3">
             {CATEGORIES.map(({ label, icon: Icon, href }) => (
               <Link
                 key={href}
                 href={href}
-                className="group flex flex-col items-center gap-2.5 p-4 rounded-card bg-[#141414] border border-white/[0.06] hover:border-[#e8c97e]/40 hover:bg-[#1a1a1a] transition-all duration-200 flex-shrink-0 w-[calc((100vw-2rem)/4.5)] sm:w-auto snap-start"
+                className="group flex flex-col items-center gap-2.5 p-4 rounded-card bg-[#141414] border border-white/[0.06] hover:border-[#e8c97e]/40 hover:bg-[#1a1a1a] transition-all duration-200"
               >
                 <div className="w-10 h-10 rounded-xl bg-[#e8c97e]/10 flex items-center justify-center group-hover:bg-[#e8c97e]/20 transition-colors">
                   <Icon size={18} className="text-[#e8c97e]" />
@@ -409,28 +407,28 @@ export default async function HomePage() {
             />
             <div className="relative z-10">
               <p className="text-xs uppercase tracking-widest text-[#e8c97e] mb-3">
-                За тебе
+                За организатори
               </p>
               <h2 className="text-2xl sm:text-3xl font-bold mb-4">
-                Се препозна на некоја слика?
+                Сакате и вашиот настан да биде претставен?
               </h2>
               <p className="text-[#888] mb-8 max-w-lg mx-auto leading-relaxed">
-                Купи ја својата фотографија од настан, концерт или спортска средба
-                во <strong className="text-[#f0f0f0]">HD резолуција без воден жиг</strong>.
-                Без претплата, без сложени услови.
+                Контактирајте нѐ за професионално покривање на ваш настан — концерт,
+                спортска средба, корпоративен настан или културна манифестација. Фотографиите
+                остануваат достапни за купување од учесниците и публиката.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                <Link
-                  href="/galleries"
+                <a
+                  href="mailto:info@photonia.mk?subject=Покривање%20на%20настан"
                   className="inline-flex items-center gap-2 bg-[#e8c97e] text-[#0a0a0a] font-bold px-8 py-3.5 rounded-card hover:bg-[#d4b46a] transition-colors"
                 >
-                  Прегледај галерии <ArrowRight size={16} />
-                </Link>
+                  Контактирај нѐ <ArrowRight size={16} />
+                </a>
                 <Link
-                  href="/search"
+                  href="/press"
                   className="inline-flex items-center gap-2 border border-white/[0.12] text-[#f0f0f0] font-medium px-8 py-3.5 rounded-card hover:border-white/25 transition-colors"
                 >
-                  Пребарај по име/настан
+                  За медиуми и пакети
                 </Link>
               </div>
             </div>
