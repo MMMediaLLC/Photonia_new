@@ -21,7 +21,6 @@ export default function CheckoutPage() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [paying, setPaying] = useState(false);
-  const [editorialAgreed, setEditorialAgreed] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -38,10 +37,6 @@ export default function CheckoutPage() {
 
   async function proceedToPayment(buyerEmail?: string) {
     if (!items.length) return;
-    if (!editorialAgreed) {
-      toast("Прифати ја editorial напомената за да продолжиш.", "error");
-      return;
-    }
     setPaying(true);
 
     const payload = {
@@ -108,12 +103,9 @@ export default function CheckoutPage() {
         </div>
 
         <div className="grid md:grid-cols-[1fr_340px] gap-6">
-          {/* Left: editorial notice + payment panel */}
+          {/* Left: license note + payment panel */}
           <div className="flex flex-col gap-4">
-            <EditorialNoticeCard
-              agreed={editorialAgreed}
-              onChange={setEditorialAgreed}
-            />
+            <LicenseNoteCard items={items} />
 
             {authLoading ? (
               <div className="flex items-center justify-center py-20">
@@ -123,13 +115,11 @@ export default function CheckoutPage() {
               <LoggedInPanel
                 email={user.email ?? ""}
                 paying={paying}
-                canPay={editorialAgreed}
                 onPay={() => proceedToPayment()}
               />
             ) : (
               <GuestPanel
                 paying={paying}
-                canPay={editorialAgreed}
                 onPay={proceedToPayment}
               />
             )}
@@ -145,42 +135,38 @@ export default function CheckoutPage() {
   );
 }
 
-// ── Editorial notice (shared) ────────────────────────────────────────
-function EditorialNoticeCard({
-  agreed,
-  onChange,
+// ── License note (shared) ────────────────────────────────────────────
+// Informational only — does NOT gate the Pay button. Editorial-use limits
+// live in /legal/license as buyer responsibility.
+function LicenseNoteCard({
+  items,
 }: {
-  agreed: boolean;
-  onChange: (v: boolean) => void;
+  items: ReturnType<typeof useCart>["items"];
 }) {
+  const hasPersonal = items.some((i) => i.license === "personal");
+  const hasCommercial = items.some((i) => i.license === "commercial");
+
   return (
-    <div className="bg-[#141414] border border-white/[0.08] rounded-card p-5">
-      <div className="border border-amber-700/30 bg-amber-950/10 rounded-lg p-4">
-        <p className="text-xs font-semibold text-amber-400 mb-2">Editorial напомена</p>
-        <p className="text-xs text-[#aaa] leading-relaxed mb-3">
-          Фотографиите со ознака Editorial Only не смеат да се употребат во рекламен
-          контекст кој имплицира поддршка од прикажаното лице. Важи за двете лиценци.{" "}
-          <Link
-            href="/legal/editorial-notice"
-            target="_blank"
-            className="text-amber-400 hover:underline"
-          >
-            Прочитај повеќе
-          </Link>
-          .
+    <div className="bg-[#141414] border border-white/[0.08] rounded-card p-5 flex flex-col gap-2.5">
+      {hasPersonal && (
+        <p className="text-xs text-[#aaa] leading-relaxed">
+          <span className="font-semibold text-[#e8c97e]">Лична лиценца</span>
+          {" "}— за приватна употреба: лично печатење, лични профили, домашна архива.
         </p>
-        <label className="flex items-start gap-2.5 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={agreed}
-            onChange={(e) => onChange(e.target.checked)}
-            className="mt-0.5 w-4 h-4 accent-[#e8c97e] cursor-pointer"
-          />
-          <span className="text-xs text-[#ccc]">
-            Ги прочитав и ги прифаќам editorial ограничувањата.
-          </span>
-        </label>
-      </div>
+      )}
+      {hasCommercial && (
+        <p className="text-xs text-[#aaa] leading-relaxed">
+          <span className="font-semibold text-[#e8c97e]">Комерцијална лиценца</span>
+          {" "}— за деловна употреба: веб, реклами, маркетинг, печатени материјали.
+        </p>
+      )}
+      <Link
+        href="/legal/license"
+        target="_blank"
+        className="text-[11px] text-[#888] hover:text-[#e8c97e] transition-colors mt-1"
+      >
+        Повеќе за лиценците →
+      </Link>
     </div>
   );
 }
@@ -189,12 +175,10 @@ function EditorialNoticeCard({
 function LoggedInPanel({
   email,
   paying,
-  canPay,
   onPay,
 }: {
   email: string;
   paying: boolean;
-  canPay: boolean;
   onPay: () => void;
 }) {
   return (
@@ -206,7 +190,7 @@ function LoggedInPanel({
       </div>
       <button
         onClick={onPay}
-        disabled={paying || !canPay}
+        disabled={paying}
         className="w-full flex items-center justify-center gap-2 bg-[#e8c97e] text-[#0a0a0a] font-semibold py-3 rounded-card hover:bg-[#d4b46a] transition-colors disabled:opacity-40 text-sm"
       >
         {paying ? (
@@ -228,11 +212,9 @@ function LoggedInPanel({
 // ── Guest panel — email field, no auth wall ──────────────────────────
 function GuestPanel({
   paying,
-  canPay,
   onPay,
 }: {
   paying: boolean;
-  canPay: boolean;
   onPay: (email: string) => void;
 }) {
   const [email, setEmail] = useState("");
@@ -279,7 +261,7 @@ function GuestPanel({
         />
         <button
           type="submit"
-          disabled={paying || !canPay || !email.trim()}
+          disabled={paying || !email.trim()}
           className="w-full flex items-center justify-center gap-2 bg-[#e8c97e] text-[#0a0a0a] font-semibold py-3 rounded-card hover:bg-[#d4b46a] transition-colors disabled:opacity-40 text-sm"
         >
           {paying ? (
@@ -303,7 +285,7 @@ function GuestPanel({
 
       <button
         onClick={handleGoogle}
-        disabled={paying || !canPay}
+        disabled={paying}
         className="w-full flex items-center justify-center gap-3 py-2.5 rounded-lg border border-white/[0.12] bg-white/[0.04] hover:bg-white/[0.08] transition-colors text-sm font-medium text-[#f0f0f0] disabled:opacity-50"
       >
         <GoogleIcon />
