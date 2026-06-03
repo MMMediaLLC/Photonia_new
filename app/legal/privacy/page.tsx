@@ -243,13 +243,13 @@ export default function PrivacyPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="text-xl font-semibold text-[#f0f0f0] mb-4">7. Барање за бришење на слика</h2>
+        <h2 className="text-xl font-semibold text-[#f0f0f0] mb-4">7. Барање за бришење на фотографија</h2>
         <p className="mb-4">
           Доколку се препознавате на некоја фотографија достапна на Платформата и сакате таа да биде отстранета,
           имате право да поднесете барање за бришење согласно членот 16 и членот 21 од ЗЗЛП. Деталната процедура
           е опишана во посебниот документ{" "}
           <Link href="/legal/takedown" className="text-[#e8c97e] hover:underline">
-            Барање за бришење на слика
+            Барање за бришење на фотографија
           </Link>
           .
         </p>

@@ -89,7 +89,7 @@ export default function PressPage() {
         <p className="text-sm text-[#ccc]">
           Поголемиот дел од фотографиите содржат препознатливи лица снимени на јавни настани
           и се означени со ознаката <span className="text-amber-400 font-medium">Editorial Only</span>.
-          Ваквите слики не смеат да се употребат во рекламен контекст кој имплицира поддршка
+          Ваквите фотографии не смеат да се употребат во рекламен контекст кој имплицира поддршка
           од прикажаното лице. Подетално во{" "}
           <Link href="/legal/editorial-notice" className="text-amber-400 hover:underline">
             Editorial напомената

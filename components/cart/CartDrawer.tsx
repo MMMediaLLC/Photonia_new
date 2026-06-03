@@ -93,7 +93,7 @@ export default function CartDrawer() {
                         updateLicense(item.photo.id, e.target.value as LicenseType)
                       }
                       className="mt-2 text-xs bg-[#141414] border border-white/[0.08] rounded-lg px-2 py-1 text-[#f0f0f0] cursor-pointer w-full"
-                      title="Сите лиценци даваат HD слика без воден жиг"
+                      title="Сите лиценци даваат HD фотографија без воден жиг"
                     >
                       <option value="personal">
                         {LICENSE_TYPES.personal.label} — {formatPrice(item.photo.price_personal)}

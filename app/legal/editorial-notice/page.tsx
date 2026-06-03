@@ -147,7 +147,7 @@ export default function EditorialNoticePage() {
         <p>
           Постапката за поднесување на такво барање е детално опишана во документот{" "}
           <Link href="/legal/takedown" className="text-[#e8c97e] hover:underline">
-            Барање за бришење на слика
+            Барање за бришење на фотографија
           </Link>
           . Операторот е должен да одговори во рок од 7 работни дена.
         </p>
@@ -174,7 +174,7 @@ export default function EditorialNoticePage() {
             </a>
           </p>
           <p>
-            За барања за бришење на слика:{" "}
+            За барања за бришење на фотографија:{" "}
             <a href="mailto:privacy@photonia.mk" className="text-[#e8c97e] hover:underline">
               privacy@photonia.mk
             </a>

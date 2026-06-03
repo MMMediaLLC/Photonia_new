@@ -43,7 +43,7 @@ const HOW_IT_WORKS = [
   {
     icon: Search,
     step: "01",
-    title: "Најди ја сликата",
+    title: "Најди ја фотографијата",
     desc: "Пребарувај по настан, тема или фотограф и отвори ја галеријата.",
   },
   {
@@ -164,13 +164,13 @@ export default async function HomePage() {
 
           {/* Content */}
           <div className="relative z-10 text-center max-w-4xl mx-auto px-4">
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight mb-6 leading-[1.05]">
-              Уникатни фотографии
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6 leading-[1.1]">
+              Платформа за пребарување, купување и преземање
               <br />
-              <span className="text-[#e8c97e]">во висока резолуција</span>
+              <span className="text-[#e8c97e]">фотографии во висока резолуција</span>
             </h1>
             <p className="text-lg sm:text-xl text-[#888] mb-10 max-w-2xl mx-auto leading-relaxed">
-              Најди ја сликата што ти треба, плати безбедно и веднаш преземи ја
+              Најди ја фотографијата што ти треба, плати безбедно и веднаш преземи ја
               во оригинална HD резолуција — <strong className="text-[#f0f0f0]">без воден жиг</strong>.
             </p>
 
@@ -309,7 +309,7 @@ export default async function HomePage() {
               <p className="text-xs uppercase tracking-widest text-[#e8c97e] mb-2">
                 Како функционира
               </p>
-              <h2 className="text-2xl font-bold mb-3">Од клик до HD слика — за 2 минути</h2>
+              <h2 className="text-2xl font-bold mb-3">Од клик до HD фотографија — за 2 минути</h2>
               <p className="text-[#888] text-sm max-w-lg mx-auto">
                 Едноставно, безбедно и без месечна претплата.
               </p>

@@ -31,7 +31,7 @@ export default function PremiumPage() {
           Ексклузивни единечни фотографии
         </h1>
         <p className="text-[#888] text-lg max-w-2xl mx-auto leading-relaxed">
-          Уникатни, висококвалитетни професионални слики — селектирани за оние кои бараат
+          Уникатни, висококвалитетни професионални фотографии — селектирани за оние кои бараат
           нешто <strong className="text-[#f0f0f0]">посебно</strong>.
         </p>
       </div>

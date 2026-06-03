@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Барање за бришење на слика",
-  description: "Процедура за поднесување барање за бришење на слика на Photonia.mk",
+  title: "Барање за бришење на фотографија",
+  description: "Процедура за поднесување барање за бришење на фотографија на Photonia.mk",
 };
 
 export default function TakedownPage() {
   return (
     <article className="text-[#ccc] leading-relaxed">
-      <h1 className="text-3xl font-bold text-[#f0f0f0] mb-2">Барање за бришење на слика</h1>
+      <h1 className="text-3xl font-bold text-[#f0f0f0] mb-2">Барање за бришење на фотографија</h1>
       <p className="text-[#666] text-sm mb-12">Последно ажурирање: мај 2026</p>
 
       <section className="mb-10">
