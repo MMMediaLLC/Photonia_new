@@ -294,6 +294,28 @@ export async function POST(req: NextRequest) {
       });
       const orderRef = lsOrderId || order.id.slice(0, 8);
 
+      // License-specific note rows (only for license types actually in this order)
+      const hasPersonal = items.some((i) => i.license === "personal");
+      const hasCommercial = items.some((i) => i.license === "commercial");
+      const licenseNotes = `
+        ${
+          hasPersonal
+            ? `<p style="margin:0 0 8px;color:#444;font-size:13px;line-height:1.6;">
+                 <strong style="color:#0a0a0a;">Лична лиценца</strong> — за приватна употреба:
+                 лично печатење, лични профили, домашна архива.
+               </p>`
+            : ""
+        }
+        ${
+          hasCommercial
+            ? `<p style="margin:0;color:#444;font-size:13px;line-height:1.6;">
+                 <strong style="color:#0a0a0a;">Комерцијална лиценца</strong> — за деловна употреба:
+                 веб, реклами, маркетинг, печатени материјали.
+               </p>`
+            : ""
+        }
+      `;
+
       await resend.emails.send({
         from: fromAddress,
         to: buyerEmail,
@@ -315,9 +337,17 @@ export async function POST(req: NextRequest) {
               ${downloadRows}
             </table>
 
-            <div style="background:#fffbe8;border:1px solid #f5dd6c;border-radius:8px;padding:14px;margin:24px 0 8px;font-size:13px;color:#665100;line-height:1.5;">
-              💡 <strong>Совет:</strong> Зачувај го мејлот или преземи ги фотографиите веднаш.
-              Лимитот е <strong>2 преземања</strong> по фотографија.
+            <div style="background:#fffbe8;border:1px solid #f5dd6c;border-radius:8px;padding:14px;margin:24px 0 20px;font-size:13px;color:#665100;line-height:1.5;">
+              📩 <strong>Чувајте го овој мејл</strong> — содржи ги сите ваши линкови за преземање.
+              Лимитот е <strong>2 преземања</strong> по фотографија. Препорачуваме веднаш да ги
+              зачувате фотографиите локално.
+            </div>
+
+            <div style="margin:0 0 24px;">
+              <p style="margin:0 0 10px;font-weight:600;color:#0a0a0a;font-size:13px;">
+                Кратко за лиценците
+              </p>
+              ${licenseNotes}
             </div>
 
             <hr style="border:0;border-top:1px solid #eee;margin:24px 0 16px;" />

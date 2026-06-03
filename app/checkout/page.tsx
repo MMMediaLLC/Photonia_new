@@ -103,10 +103,8 @@ export default function CheckoutPage() {
         </div>
 
         <div className="grid md:grid-cols-[1fr_340px] gap-6">
-          {/* Left: license note + payment panel */}
+          {/* Left: payment panel */}
           <div className="flex flex-col gap-4">
-            <LicenseNoteCard items={items} />
-
             {authLoading ? (
               <div className="flex items-center justify-center py-20">
                 <Loader2 size={28} className="animate-spin text-[#e8c97e]" />
@@ -131,42 +129,6 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-// ── License note (shared) ────────────────────────────────────────────
-// Informational only — does NOT gate the Pay button. Editorial-use limits
-// live in /legal/license as buyer responsibility.
-function LicenseNoteCard({
-  items,
-}: {
-  items: ReturnType<typeof useCart>["items"];
-}) {
-  const hasPersonal = items.some((i) => i.license === "personal");
-  const hasCommercial = items.some((i) => i.license === "commercial");
-
-  return (
-    <div className="bg-[#141414] border border-white/[0.08] rounded-card p-5 flex flex-col gap-2.5">
-      {hasPersonal && (
-        <p className="text-xs text-[#aaa] leading-relaxed">
-          <span className="font-semibold text-[#e8c97e]">Лична лиценца</span>
-          {" "}— за приватна употреба: лично печатење, лични профили, домашна архива.
-        </p>
-      )}
-      {hasCommercial && (
-        <p className="text-xs text-[#aaa] leading-relaxed">
-          <span className="font-semibold text-[#e8c97e]">Комерцијална лиценца</span>
-          {" "}— за деловна употреба: веб, реклами, маркетинг, печатени материјали.
-        </p>
-      )}
-      <Link
-        href="/legal/license"
-        target="_blank"
-        className="text-[11px] text-[#888] hover:text-[#e8c97e] transition-colors mt-1"
-      >
-        Повеќе за лиценците →
-      </Link>
     </div>
   );
 }
