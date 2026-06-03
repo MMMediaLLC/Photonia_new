@@ -1,6 +1,14 @@
 import Link from "next/link";
 import PaymentLogos from "@/components/layout/PaymentLogos";
 
+const exploreLinks = [
+  { href: "/galleries", label: "Галерии" },
+  { href: "/search", label: "Пребарај" },
+  { href: "/faq", label: "Често прашања" },
+  { href: "/press", label: "За медиуми" },
+  { href: "/about", label: "За нас" },
+];
+
 const legalLinks = [
   { href: "/legal/terms", label: "Услови за користење" },
   { href: "/legal/license", label: "Договор за лиценца" },
@@ -14,66 +22,62 @@ const legalLinks = [
 
 export default function Footer() {
   return (
-    <footer className="border-t border-white/[0.08] mt-24 py-12 px-4">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div>
-          <p className="text-lg font-bold text-[#e8c97e] mb-2">PHOTONIA</p>
-          <p className="text-sm text-[#888] leading-relaxed">
-            Платформа за фотографии од настани, спорт, култура и јавни случувања. Корисниците можат да разгледуваат галерии, да изберат фотографии, да купат безбедно и веднаш да ги преземат во висока резолуција, без воден жиг.
+    <footer className="border-t border-white/[0.08] mt-24 pt-12 pb-8 px-4">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-10">
+        {/* Brand — wider column */}
+        <div className="md:col-span-5">
+          <p className="text-lg font-bold text-[#e8c97e] mb-3">PHOTONIA</p>
+          <p className="text-xs text-[#888] leading-relaxed max-w-sm">
+            Платформа за фотографии од настани, спорт, култура и јавни случувања.
+            Купи безбедно и преземи во висока резолуција, без воден жиг.
           </p>
         </div>
 
-        <div>
-          <p className="text-xs uppercase tracking-widest text-[#888] mb-3">Истражи</p>
-          <div className="flex flex-col gap-2 text-sm">
-            <Link href="/galleries" className="text-[#f0f0f0] hover:text-[#e8c97e] transition-colors">
-              Галерии
-            </Link>
-            <Link href="/search" className="text-[#f0f0f0] hover:text-[#e8c97e] transition-colors">
-              Пребарај
-            </Link>
-            <Link href="/faq" className="text-[#f0f0f0] hover:text-[#e8c97e] transition-colors">
-              Често прашања
-            </Link>
-            <Link href="/press" className="text-[#f0f0f0] hover:text-[#e8c97e] transition-colors">
-              За медиуми
-            </Link>
-            <Link href="/about" className="text-[#f0f0f0] hover:text-[#e8c97e] transition-colors">
-              За нас
-            </Link>
-          </div>
-        </div>
-
-        <div>
-          <p className="text-xs uppercase tracking-widest text-[#888] mb-3">Правни документи</p>
-          <div className="flex flex-col gap-2 text-sm">
-            {legalLinks.map((link) => (
-              <Link key={link.href} href={link.href} className="text-[#888] hover:text-[#f0f0f0] transition-colors">
-                {link.label}
-              </Link>
+        {/* Explore */}
+        <div className="md:col-span-3">
+          <p className="text-[10px] uppercase tracking-widest text-[#666] mb-3 font-medium">
+            Истражи
+          </p>
+          <ul className="flex flex-col gap-1.5">
+            {exploreLinks.map((link) => (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  className="text-xs text-[#bbb] hover:text-[#e8c97e] transition-colors"
+                >
+                  {link.label}
+                </Link>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
-      </div>
 
-      {/* Accepted payments — trust signals */}
-      <div className="max-w-7xl mx-auto mt-10 pt-6 border-t border-white/[0.08]">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs uppercase tracking-widest text-[#555]">
-            Прифаќаме сигурно плаќање
+        {/* Legal — compact 2-col grid */}
+        <div className="md:col-span-4">
+          <p className="text-[10px] uppercase tracking-widest text-[#666] mb-3 font-medium">
+            Правни документи
           </p>
-          <PaymentLogos size={26} />
+          <ul className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+            {legalLinks.map((link) => (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  className="text-[11px] text-[#888] hover:text-[#f0f0f0] transition-colors leading-snug"
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto mt-6 pt-6 border-t border-white/[0.08] text-xs text-[#888] flex flex-wrap gap-4 justify-between items-center">
-        <p>© {new Date().getFullYear()} Photonia. Сите права задржани. M&M Media.</p>
-        <div className="flex gap-4 flex-wrap">
-          <Link href="/legal/privacy" className="hover:text-[#f0f0f0]">Приватност</Link>
-          <Link href="/legal/terms" className="hover:text-[#f0f0f0]">Услови</Link>
-          <Link href="/legal/cookies" className="hover:text-[#f0f0f0]">Колачиња</Link>
-          <Link href="/legal/takedown" className="hover:text-[#f0f0f0]">Барање за бришење</Link>
-        </div>
+      {/* Bottom row: copyright + accepted payments */}
+      <div className="max-w-7xl mx-auto mt-10 pt-5 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p className="text-[11px] text-[#666]">
+          © {new Date().getFullYear()} Photonia · M&amp;M Media · Сите права задржани.
+        </p>
+        <PaymentLogos size={22} />
       </div>
     </footer>
   );

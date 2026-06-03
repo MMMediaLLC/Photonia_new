@@ -13,10 +13,11 @@ export default function PaymentLogos({
   // Each card uses the same height; widths follow the actual aspect ratio.
   const h = size;
   return (
-    <div className={`flex items-center gap-3 ${className}`} aria-label="Прифаќаме картички">
+    <div className={`flex items-center gap-2 ${className}`} aria-label="Прифатени начини на плаќање">
       <VisaMark height={h} />
       <MastercardMark height={h} />
       <AmexMark height={h} />
+      <PaypalMark height={h} />
     </div>
   );
 }
@@ -96,6 +97,27 @@ function AmexMark({ height }: { height: number }) {
         letterSpacing="0.5"
       >
         AMEX
+      </text>
+    </CardBox>
+  );
+}
+
+function PaypalMark({ height }: { height: number }) {
+  const w = (height * 58) / 28;
+  return (
+    <CardBox width={w} height={height} viewBox="0 0 72 22">
+      <text
+        x="36"
+        y="17"
+        textAnchor="middle"
+        fontFamily="Arial, sans-serif"
+        fontWeight="900"
+        fontSize="14"
+        fontStyle="italic"
+        fill="#f0f0f0"
+        letterSpacing="-0.2"
+      >
+        PayPal
       </text>
     </CardBox>
   );
