@@ -1,4 +1,5 @@
 import Link from "next/link";
+import PaymentLogos from "@/components/layout/PaymentLogos";
 
 const legalLinks = [
   { href: "/legal/terms", label: "Услови за користење" },
@@ -55,7 +56,17 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto mt-10 pt-6 border-t border-white/[0.08] text-xs text-[#888] flex flex-wrap gap-4 justify-between items-center">
+      {/* Accepted payments — trust signals */}
+      <div className="max-w-7xl mx-auto mt-10 pt-6 border-t border-white/[0.08]">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs uppercase tracking-widest text-[#555]">
+            Прифаќаме сигурно плаќање
+          </p>
+          <PaymentLogos size={26} />
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto mt-6 pt-6 border-t border-white/[0.08] text-xs text-[#888] flex flex-wrap gap-4 justify-between items-center">
         <p>© {new Date().getFullYear()} Photonia. Сите права задржани. M&M Media.</p>
         <div className="flex gap-4 flex-wrap">
           <Link href="/legal/privacy" className="hover:text-[#f0f0f0]">Приватност</Link>

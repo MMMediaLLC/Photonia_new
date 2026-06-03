@@ -9,12 +9,13 @@ import { useCart } from "@/components/cart/CartProvider";
 import { formatPrice } from "@/lib/utils";
 import { getCloudinaryWatermarkedUrl } from "@/lib/utils";
 import { toast } from "@/components/ui/Toaster";
-import { Loader2, ShoppingBag } from "lucide-react";
+import { Loader2, ShoppingBag, ArrowLeft } from "lucide-react";
+import PaymentLogos from "@/components/layout/PaymentLogos";
 import type { User } from "@supabase/supabase-js";
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { items, total } = useCart();
+  const { items, total, openCart } = useCart();
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ?? "";
 
   const [user, setUser] = useState<User | null>(null);
@@ -90,11 +91,21 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen px-4 py-12">
+    <div className="min-h-screen px-4 py-8">
       <div className="max-w-2xl mx-auto">
-        <Link href="/" className="text-xl font-bold text-[#e8c97e] block text-center mb-10">
-          PHOTONIA
-        </Link>
+        {/* Top bar: back to cart + logo */}
+        <div className="flex items-center justify-between mb-8">
+          <button
+            onClick={openCart}
+            className="flex items-center gap-1.5 text-sm text-[#888] hover:text-[#f0f0f0] transition-colors"
+          >
+            <ArrowLeft size={14} /> Кошничка
+          </button>
+          <Link href="/" className="text-xl font-bold text-[#e8c97e]">
+            PHOTONIA
+          </Link>
+          <span className="w-[88px]" /> {/* spacer to centre logo */}
+        </div>
 
         <div className="grid md:grid-cols-[1fr_340px] gap-6">
           {/* Left: editorial notice + payment panel */}
@@ -209,6 +220,7 @@ function LoggedInPanel({
       <p className="text-xs text-[#555] text-center">
         Плаќањето се обработува безбедно · SSL шифрирано
       </p>
+      <PaymentLogos size={22} className="justify-center" />
     </div>
   );
 }
@@ -320,16 +332,18 @@ function OrderSummary({
       <h3 className="text-sm font-semibold text-[#888] uppercase tracking-wide">
         Нарачка ({items.length})
       </h3>
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3.5">
         {items.map((item) => {
           const price =
             item.license === "personal" ? item.photo.price_personal : item.photo.price_commercial;
+          const photoTitle = item.photo.title?.trim() || "Фотографија";
+          const galleryTitle = item.gallery?.title?.trim();
           return (
-            <div key={item.photo.id} className="flex gap-3 items-center">
-              <div className="relative w-14 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-white/5">
+            <div key={item.photo.id} className="flex gap-3 items-start">
+              <div className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-white/5">
                 <Image
                   src={getCloudinaryWatermarkedUrl(item.photo.cloudinary_public_id, cloudName)}
-                  alt={item.photo.title || ""}
+                  alt={photoTitle}
                   fill
                   className="object-cover"
                   sizes="56px"
@@ -337,13 +351,18 @@ function OrderSummary({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium truncate text-[#f0f0f0]">
-                  {item.photo.title || "Фотографија"}
+                  {photoTitle}
                 </p>
-                <p className="text-[10px] text-[#555]">
+                {galleryTitle && (
+                  <p className="text-[10px] text-[#888] truncate">
+                    {galleryTitle}
+                  </p>
+                )}
+                <p className="text-[10px] text-[#555] mt-0.5">
                   {item.license === "personal" ? "Лична лиценца" : "Комерцијална лиценца"}
                 </p>
               </div>
-              <span className="text-xs font-semibold text-[#e8c97e] flex-shrink-0">
+              <span className="text-xs font-semibold text-[#e8c97e] flex-shrink-0 mt-0.5">
                 {formatPrice(price)}
               </span>
             </div>
@@ -354,8 +373,8 @@ function OrderSummary({
         <span className="text-sm text-[#888]">Вкупно</span>
         <span className="text-lg font-bold text-[#e8c97e]">{formatPrice(total)}</span>
       </div>
-      <p className="text-[10px] text-[#555] text-center">
-        HD без воден жиг · Линкот важи една година
+      <p className="text-[10px] text-[#555] text-center leading-relaxed">
+        HD без воден жиг · <strong className="text-[#888]">2 преземања</strong> во рок од <strong className="text-[#888]">1 година</strong>
       </p>
     </div>
   );
