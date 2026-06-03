@@ -93,7 +93,7 @@ export default function CartDrawer() {
                         updateLicense(item.photo.id, e.target.value as LicenseType)
                       }
                       className="mt-2 text-xs bg-[#141414] border border-white/[0.08] rounded-lg px-2 py-1 text-[#f0f0f0] cursor-pointer w-full"
-                      title="Сите лиценци даваат HD слика без watermark"
+                      title="Сите лиценци даваат HD слика без воден жиг"
                     >
                       <option value="personal">
                         {LICENSE_TYPES.personal.label} — {formatPrice(item.photo.price_personal)}
@@ -127,7 +127,7 @@ export default function CartDrawer() {
           <div className="px-6 py-5 border-t border-white/[0.08]">
             <div className="bg-[#0a0a0a] border border-white/[0.06] rounded-lg p-3 mb-4 text-xs text-[#888] leading-relaxed">
               <p className="text-[#f0f0f0] font-medium mb-1">✓ Што добиваш:</p>
-              <p>HD оригинал во висока резолуција, без watermark, веднаш достапно за преземање.</p>
+              <p>HD оригинал во висока резолуција, без воден жиг, веднаш достапно за преземање.</p>
             </div>
 
             <div className="flex justify-between items-center mb-4">

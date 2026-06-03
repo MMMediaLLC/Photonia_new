@@ -15,7 +15,7 @@ export default function CheckoutSuccessPage() {
         <p className="text-[#888] mb-8 leading-relaxed">
           Благодариме на купувањето. Сликите се{" "}
           <strong className="text-[#f0f0f0]">достапни веднаш</strong>{" "}
-          во твојот профил, HD без watermark.
+          во твојот профил, HD без воден жиг.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3">

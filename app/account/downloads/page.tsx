@@ -60,8 +60,12 @@ export default async function DownloadsPage() {
         {allItems.map((item) => {
           const photo = item.photo;
           const isExpired = new Date(item.download_expires_at) < new Date();
-          const limitReached = item.download_count >= 3;
-          const canDownload = !isExpired && !limitReached;
+          const canDownload = !isExpired;
+          const expiresAt = new Date(item.download_expires_at);
+          const daysLeft = Math.max(
+            0,
+            Math.ceil((expiresAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000))
+          );
           const url = photo?.cloudinary_public_id
             ? getCloudinaryWatermarkedUrl(photo.cloudinary_public_id, cloudName)
             : "";
@@ -97,7 +101,11 @@ export default async function DownloadsPage() {
                   <span>·</span>
                   <span className="flex items-center gap-1">
                     <Clock size={10} />
-                    {item.download_count}/3 преземања
+                    {isExpired
+                      ? "Истечен"
+                      : daysLeft > 30
+                        ? `Активен · уште ${daysLeft} дена`
+                        : `Истекува за ${daysLeft} дена`}
                   </span>
                 </div>
               </div>
@@ -111,7 +119,7 @@ export default async function DownloadsPage() {
                 }`}
               >
                 <Download size={14} />
-                {isExpired ? "Истечен" : limitReached ? "Лимит" : "Преземи"}
+                {isExpired ? "Истечен" : "Преземи"}
               </a>
             </div>
           );

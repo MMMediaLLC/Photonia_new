@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, type Dispatch, type SetStateAction } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -12,8 +12,6 @@ import { toast } from "@/components/ui/Toaster";
 import { Loader2, ShoppingBag } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
-type AuthTab = "register" | "login";
-
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, total } = useCart();
@@ -21,11 +19,8 @@ export default function CheckoutPage() {
 
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [tab, setTab] = useState<AuthTab>("register");
   const [paying, setPaying] = useState(false);
   const [editorialAgreed, setEditorialAgreed] = useState(false);
-
-  const canPay = editorialAgreed;
 
   useEffect(() => {
     const supabase = createClient();
@@ -33,7 +28,6 @@ export default function CheckoutPage() {
       setUser(data.user ?? null);
       setAuthLoading(false);
     });
-    // Keep user state in sync — fires when email confirmation lands back on /checkout
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       setAuthLoading(false);
@@ -41,15 +35,16 @@ export default function CheckoutPage() {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  async function proceedToPayment() {
+  async function proceedToPayment(buyerEmail?: string) {
     if (!items.length) return;
-    if (!canPay) {
-      toast("Прифати ја editorial изјавата за да продолжиш.", "error");
+    if (!editorialAgreed) {
+      toast("Прифати ја editorial напомената за да продолжиш.", "error");
       return;
     }
     setPaying(true);
 
     const payload = {
+      email: buyerEmail || user?.email || "",
       items: items.map((i) => ({
         photoId: i.photo.id,
         license: i.license,
@@ -102,30 +97,12 @@ export default function CheckoutPage() {
         </Link>
 
         <div className="grid md:grid-cols-[1fr_340px] gap-6">
-          {/* Left: Auth or Logged-in payment */}
+          {/* Left: editorial notice + payment panel */}
           <div className="flex flex-col gap-4">
-            {/* Legal disclosures — shown to all users before payment */}
-            <div className="bg-[#141414] border border-white/[0.08] rounded-card p-5 flex flex-col gap-4">
-              <div className="border border-amber-700/30 bg-amber-950/10 rounded-lg p-4">
-                <p className="text-xs font-semibold text-amber-400 mb-2">Editorial напомена</p>
-                <p className="text-xs text-[#aaa] leading-relaxed mb-3">
-                  Фотографиите со ознака Editorial Only не смеат да се употребат во рекламен
-                  контекст кој имплицира поддршка од прикажаното лице. Важи за двете лиценци.{" "}
-                  <Link href="/legal/editorial-notice" target="_blank" className="text-amber-400 hover:underline">
-                    Прочитај повеќе
-                  </Link>.
-                </p>
-                <label className="flex items-start gap-2.5 cursor-pointer">
-                  <input type="checkbox" checked={editorialAgreed}
-                    onChange={(e) => setEditorialAgreed(e.target.checked)}
-                    className="mt-0.5 w-4 h-4 accent-[#e8c97e] cursor-pointer" />
-                  <span className="text-xs text-[#ccc]">
-                    Ги прочитав и ги прифаќам editorial ограничувањата.
-                  </span>
-                </label>
-              </div>
-
-            </div>
+            <EditorialNoticeCard
+              agreed={editorialAgreed}
+              onChange={setEditorialAgreed}
+            />
 
             {authLoading ? (
               <div className="flex items-center justify-center py-20">
@@ -135,16 +112,14 @@ export default function CheckoutPage() {
               <LoggedInPanel
                 email={user.email ?? ""}
                 paying={paying}
-                canPay={canPay}
-                onPay={proceedToPayment}
+                canPay={editorialAgreed}
+                onPay={() => proceedToPayment()}
               />
             ) : (
-              <AuthPanel
-                tab={tab}
-                setTab={setTab}
-                canPay={canPay}
-                onSuccess={proceedToPayment}
+              <GuestPanel
                 paying={paying}
+                canPay={editorialAgreed}
+                onPay={proceedToPayment}
               />
             )}
           </div>
@@ -154,6 +129,46 @@ export default function CheckoutPage() {
             <OrderSummary items={items} total={total} cloudName={cloudName} />
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Editorial notice (shared) ────────────────────────────────────────
+function EditorialNoticeCard({
+  agreed,
+  onChange,
+}: {
+  agreed: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <div className="bg-[#141414] border border-white/[0.08] rounded-card p-5">
+      <div className="border border-amber-700/30 bg-amber-950/10 rounded-lg p-4">
+        <p className="text-xs font-semibold text-amber-400 mb-2">Editorial напомена</p>
+        <p className="text-xs text-[#aaa] leading-relaxed mb-3">
+          Фотографиите со ознака Editorial Only не смеат да се употребат во рекламен
+          контекст кој имплицира поддршка од прикажаното лице. Важи за двете лиценци.{" "}
+          <Link
+            href="/legal/editorial-notice"
+            target="_blank"
+            className="text-amber-400 hover:underline"
+          >
+            Прочитај повеќе
+          </Link>
+          .
+        </p>
+        <label className="flex items-start gap-2.5 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={(e) => onChange(e.target.checked)}
+            className="mt-0.5 w-4 h-4 accent-[#e8c97e] cursor-pointer"
+          />
+          <span className="text-xs text-[#ccc]">
+            Ги прочитав и ги прифаќам editorial ограничувањата.
+          </span>
+        </label>
       </div>
     </div>
   );
@@ -183,206 +198,112 @@ function LoggedInPanel({
         disabled={paying || !canPay}
         className="w-full flex items-center justify-center gap-2 bg-[#e8c97e] text-[#0a0a0a] font-semibold py-3 rounded-card hover:bg-[#d4b46a] transition-colors disabled:opacity-40 text-sm"
       >
-        {paying ? <><Loader2 size={14} className="animate-spin" /> Пренасочување...</> : "🔒 Плати безбедно"}
+        {paying ? (
+          <>
+            <Loader2 size={14} className="animate-spin" /> Пренасочување...
+          </>
+        ) : (
+          "🔒 Плати безбедно"
+        )}
       </button>
-      <p className="text-xs text-[#555] text-center">Плаќањето го обработува LemonSqueezy · SSL шифрирано</p>
+      <p className="text-xs text-[#555] text-center">
+        Плаќањето го обработува LemonSqueezy · SSL шифрирано
+      </p>
     </div>
   );
 }
 
-// ── Auth panel (register + login tabs) ──────────────────────────────
-function AuthPanel({
-  tab,
-  setTab,
-  canPay,
-  onSuccess,
+// ── Guest panel — email field, no auth wall ──────────────────────────
+function GuestPanel({
   paying,
+  canPay,
+  onPay,
 }: {
-  tab: AuthTab;
-  setTab: Dispatch<SetStateAction<AuthTab>>;
-  canPay: boolean;
-  onSuccess: () => void | Promise<void>;
   paying: boolean;
+  canPay: boolean;
+  onPay: (email: string) => void;
 }) {
+  const [email, setEmail] = useState("");
+
+  async function handleGoogle() {
+    const supabase = createClient();
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent("/checkout")}`,
+      },
+    });
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email.trim() || !/.+@.+\..+/.test(email)) {
+      toast("Внеси валидна е-пошта.", "error");
+      return;
+    }
+    onPay(email.trim().toLowerCase());
+  }
+
   return (
     <div className="bg-[#141414] border border-white/[0.08] rounded-card p-6 flex flex-col gap-4">
-      <h2 className="text-lg font-semibold mb-1">За да платиш, влез во профилот</h2>
-
-      {/* Tabs */}
-      <div className="flex rounded-lg bg-[#0a0a0a] p-0.5 gap-0.5">
-        {(["register", "login"] as AuthTab[]).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-colors ${
-              tab === t
-                ? "bg-[#e8c97e] text-[#0a0a0a]"
-                : "text-[#888] hover:text-[#f0f0f0]"
-            }`}
-          >
-            {t === "register" ? "Нов корисник" : "Веќе имам профил"}
-          </button>
-        ))}
+      <div>
+        <h2 className="text-lg font-semibold">Е-пошта за нарачката</h2>
+        <p className="text-xs text-[#888] mt-1 leading-relaxed">
+          Линковите за преземање ќе бидат испратени на оваа адреса. Сметката се создава автоматски
+          — не треба регистрација.
+        </p>
       </div>
 
-      {tab === "register" ? (
-        <RegisterForm onSuccess={onSuccess} paying={paying} canPay={canPay} />
-      ) : (
-        <LoginForm onSuccess={onSuccess} paying={paying} canPay={canPay} />
-      )}
-    </div>
-  );
-}
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <input
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          placeholder="tvojata@eposta.mk"
+          className="w-full bg-[#0a0a0a] border border-white/[0.08] rounded-lg px-3 py-3 text-sm text-[#f0f0f0] placeholder:text-[#555] focus:outline-none focus:border-[#e8c97e]/50"
+        />
+        <button
+          type="submit"
+          disabled={paying || !canPay || !email.trim()}
+          className="w-full flex items-center justify-center gap-2 bg-[#e8c97e] text-[#0a0a0a] font-semibold py-3 rounded-card hover:bg-[#d4b46a] transition-colors disabled:opacity-40 text-sm"
+        >
+          {paying ? (
+            <>
+              <Loader2 size={14} className="animate-spin" /> Пренасочување...
+            </>
+          ) : (
+            "🔒 Плати безбедно"
+          )}
+        </button>
+        <p className="text-xs text-[#555] text-center leading-relaxed">
+          Плаќањето го обработува LemonSqueezy · SSL шифрирано
+        </p>
+      </form>
 
-// ── Register form ────────────────────────────────────────────────────
-function RegisterForm({ onSuccess, paying, canPay }: { onSuccess: () => void | Promise<void>; paying: boolean; canPay: boolean }) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [agreed, setAgreed] = useState(false);
-  const [loading, setLoading] = useState(false);
+      <div className="flex items-center gap-3 text-[#444] text-xs">
+        <div className="flex-1 h-px bg-white/[0.08]" />
+        или
+        <div className="flex-1 h-px bg-white/[0.08]" />
+      </div>
 
-  async function handleGoogle() {
-    setLoading(true);
-    const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent("/checkout")}`,
-      },
-    });
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!agreed) { toast("Прифати ги условите за да продолжиш", "error"); return; }
-    setLoading(true);
-    const supabase = createClient();
-    const { data: signUpData, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { name, role: "buyer" },
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/checkout`,
-      },
-    });
-    if (error) {
-      toast(error.message, "error");
-      setLoading(false);
-      return;
-    }
-    if (signUpData.session) {
-      // Auto-confirmed (e.g. dev mode) — proceed directly to payment
-      onSuccess();
-    } else {
-      // Supabase sent a confirmation email; we cannot pay until it is confirmed.
-      // The emailRedirectTo above will bring the user back to /checkout with cart intact.
-      toast(
-        "Испративме е-пошта за потврда. Кликни на линкот и ќе се вратиш овде за да платиш.",
-        "info"
-      );
-      setLoading(false);
-    }
-  }
-
-  const busy = loading || paying;
-
-  return (
-    <div className="flex flex-col gap-3">
       <button
         onClick={handleGoogle}
-        disabled={busy}
+        disabled={paying || !canPay}
         className="w-full flex items-center justify-center gap-3 py-2.5 rounded-lg border border-white/[0.12] bg-white/[0.04] hover:bg-white/[0.08] transition-colors text-sm font-medium text-[#f0f0f0] disabled:opacity-50"
       >
         <GoogleIcon />
-        Регистрирај се со Google
+        Продолжи со Google
       </button>
-      <div className="flex items-center gap-3 text-[#444] text-xs">
-        <div className="flex-1 h-px bg-white/[0.08]" />или<div className="flex-1 h-px bg-white/[0.08]" />
-      </div>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <input type="text" value={name} onChange={(e) => setName(e.target.value)} required placeholder="Ime и Презиме"
-          className="w-full bg-[#0a0a0a] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-[#f0f0f0] placeholder:text-[#555] focus:outline-none focus:border-[#e8c97e]/50" />
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="Е-пошта"
-          className="w-full bg-[#0a0a0a] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-[#f0f0f0] placeholder:text-[#555] focus:outline-none focus:border-[#e8c97e]/50" />
-        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} placeholder="Лозинка (мин. 8 карактери)"
-          className="w-full bg-[#0a0a0a] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-[#f0f0f0] placeholder:text-[#555] focus:outline-none focus:border-[#e8c97e]/50" />
-        <label className="flex items-start gap-2.5 cursor-pointer">
-          <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)}
-            className="mt-0.5 w-4 h-4 accent-[#e8c97e] cursor-pointer" />
-          <span className="text-xs text-[#888] leading-relaxed">
-            Прифаќам ги{" "}
-            <Link href="/legal/terms" target="_blank" className="text-[#e8c97e] hover:underline">Условите</Link>
-            {" "}и{" "}
-            <Link href="/legal/privacy" target="_blank" className="text-[#e8c97e] hover:underline">Приватноста</Link>
-          </span>
-        </label>
-        <button type="submit" disabled={busy || !agreed || !canPay}
-          className="w-full flex items-center justify-center gap-2 bg-[#e8c97e] text-[#0a0a0a] font-semibold py-2.5 rounded-card hover:bg-[#d4b46a] transition-colors disabled:opacity-50 text-sm">
-          {busy ? <><Loader2 size={14} className="animate-spin" /> Обработување...</> : "Регистрирај се и плати"}
-        </button>
-      </form>
-    </div>
-  );
-}
 
-// ── Login form ───────────────────────────────────────────────────────
-function LoginForm({ onSuccess, paying, canPay }: { onSuccess: () => void | Promise<void>; paying: boolean; canPay: boolean }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  async function handleGoogle() {
-    setLoading(true);
-    const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent("/checkout")}`,
-      },
-    });
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      toast(error.message, "error");
-      setLoading(false);
-      return;
-    }
-    onSuccess();
-  }
-
-  const busy = loading || paying;
-
-  return (
-    <div className="flex flex-col gap-3">
-      <button
-        onClick={handleGoogle}
-        disabled={busy}
-        className="w-full flex items-center justify-center gap-3 py-2.5 rounded-lg border border-white/[0.12] bg-white/[0.04] hover:bg-white/[0.08] transition-colors text-sm font-medium text-[#f0f0f0] disabled:opacity-50"
-      >
-        <GoogleIcon />
-        Најави се со Google
-      </button>
-      <div className="flex items-center gap-3 text-[#444] text-xs">
-        <div className="flex-1 h-px bg-white/[0.08]" />или<div className="flex-1 h-px bg-white/[0.08]" />
-      </div>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="Е-пошта"
-          className="w-full bg-[#0a0a0a] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-[#f0f0f0] placeholder:text-[#555] focus:outline-none focus:border-[#e8c97e]/50" />
-        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="Лозинка"
-          className="w-full bg-[#0a0a0a] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-[#f0f0f0] placeholder:text-[#555] focus:outline-none focus:border-[#e8c97e]/50" />
-        <button type="submit" disabled={busy || !canPay}
-          className="w-full flex items-center justify-center gap-2 bg-[#e8c97e] text-[#0a0a0a] font-semibold py-2.5 rounded-card hover:bg-[#d4b46a] transition-colors disabled:opacity-50 text-sm">
-          {busy ? <><Loader2 size={14} className="animate-spin" /> Обработување...</> : "Најави се и плати"}
-        </button>
-      </form>
-      <p className="text-xs text-center text-[#555]">
-        <Link href="/login" className="hover:text-[#888] transition-colors">Заборавена лозинка?</Link>
+      <p className="text-[11px] text-[#555] leading-relaxed text-center">
+        Веќе имаш сметка?{" "}
+        <Link href="/login" className="text-[#888] hover:text-[#e8c97e] transition-colors">
+          Најави се
+        </Link>
+        {" "}за да го најдеш претходните преземања.
       </p>
     </div>
   );
@@ -405,7 +326,8 @@ function OrderSummary({
       </h3>
       <div className="flex flex-col gap-3">
         {items.map((item) => {
-          const price = item.license === "personal" ? item.photo.price_personal : item.photo.price_commercial;
+          const price =
+            item.license === "personal" ? item.photo.price_personal : item.photo.price_commercial;
           return (
             <div key={item.photo.id} className="flex gap-3 items-center">
               <div className="relative w-14 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-white/5">
@@ -437,7 +359,7 @@ function OrderSummary({
         <span className="text-lg font-bold text-[#e8c97e]">{formatPrice(total)}</span>
       </div>
       <p className="text-[10px] text-[#555] text-center">
-        HD без watermark · Постојано достапно во профилот
+        HD без воден жиг · Линкот важи една година
       </p>
     </div>
   );
@@ -446,10 +368,22 @@ function OrderSummary({
 function GoogleIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-      <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
-      <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
-      <path d="M3.964 10.706A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.038l3.007-2.332z" fill="#FBBC05"/>
-      <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.962L3.964 7.294C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+      <path
+        d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"
+        fill="#4285F4"
+      />
+      <path
+        d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z"
+        fill="#34A853"
+      />
+      <path
+        d="M3.964 10.706A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"
+        fill="#FBBC05"
+      />
+      <path
+        d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.962L3.964 7.294C4.672 5.163 6.656 3.58 9 3.58z"
+        fill="#EA4335"
+      />
     </svg>
   );
 }

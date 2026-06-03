@@ -63,7 +63,8 @@ export async function POST(req: NextRequest) {
 
   console.log("[LS webhook]", { lsOrderId, buyerEmail, userId, total, photoIds, licenses });
 
-  // Resolve buyer_id — prefer explicit user_id, fallback to auth email lookup
+  // Resolve buyer_id — prefer explicit user_id, fallback to auth email lookup,
+  // and finally AUTO-CREATE the auth user so guest checkouts get a real account.
   let buyerId: string | null = userId ?? null;
   if (!buyerId && buyerEmail) {
     console.warn("[LS webhook] No user_id in custom_data, trying auth email lookup for:", buyerEmail);
@@ -74,8 +75,24 @@ export async function POST(req: NextRequest) {
     } catch (err) {
       console.error("[LS webhook] Auth user lookup failed:", err);
     }
+
     if (!buyerId) {
-      console.error("[LS webhook] No auth user found for email:", buyerEmail);
+      console.log("[LS webhook] No existing auth user — auto-creating for:", buyerEmail);
+      try {
+        const { data: created, error: createErr } = await supabase.auth.admin.createUser({
+          email: buyerEmail,
+          email_confirm: true, // skip confirmation — buyer has already paid
+          user_metadata: { role: "buyer", auto_created: true },
+        });
+        if (createErr) {
+          console.error("[LS webhook] Auto-create user failed:", createErr.message);
+        } else if (created?.user?.id) {
+          buyerId = created.user.id;
+          console.log("[LS webhook] Auto-created buyer:", buyerId);
+        }
+      } catch (err) {
+        console.error("[LS webhook] Auto-create user threw:", err);
+      }
     }
   }
 
@@ -217,47 +234,74 @@ export async function POST(req: NextRequest) {
     console.log(`[LS webhook] Created ${items.length} order_items for order ${order.id}`);
   }
 
-  // Send simple order confirmation email (no magic link — buyer is already logged in)
+  // Send buyer email with direct download links per photo.
+  // Primary access path — buyer can download without ever logging in.
   const resendKey = process.env.RESEND_API_KEY;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://photonia.mk";
 
-  if (resendKey && resendKey !== "your_resend_api_key" && buyerEmail) {
+  if (resendKey && resendKey !== "your_resend_api_key" && buyerEmail && items.length) {
     try {
       const { Resend } = await import("resend");
       const resend = new Resend(resendKey);
       const fromAddress = process.env.RESEND_FROM ?? "Photonia <onboarding@resend.dev>";
 
+      const downloadRows = items
+        .map((item, idx) => {
+          const url = `${siteUrl}/api/downloads/${item.download_token}`;
+          const licenseLabel = item.license === "commercial" ? "Комерцијална" : "Лична";
+          return `
+            <tr>
+              <td style="padding:10px 0;border-bottom:1px solid #eee;font-size:14px;color:#222;">
+                Слика #${idx + 1}
+                <span style="color:#888;font-size:12px;"> · ${licenseLabel} лиценца</span>
+              </td>
+              <td style="padding:10px 0;border-bottom:1px solid #eee;text-align:right;">
+                <a href="${url}"
+                   style="display:inline-block;background:#e8c97e;color:#0a0a0a;font-weight:600;padding:8px 16px;border-radius:6px;text-decoration:none;font-size:13px;">
+                  Преземи
+                </a>
+              </td>
+            </tr>
+          `;
+        })
+        .join("");
+
       await resend.emails.send({
         from: fromAddress,
         to: buyerEmail,
-        subject: "Нарачката е успешна — Твоите фотографии те чекаат",
+        subject: "Твоите фотографии се подготвени за преземање",
         html: `
-          <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px;background:#fff;color:#222;">
-            <h2 style="color:#0a0a0a;">Благодарам за нарачката! 🎉</h2>
-            <p>Твоите фотографии се подготвени за преземање и се достапни во твојот профил.</p>
-            <p style="margin:28px 0;">
-              <a href="${siteUrl}/account/downloads"
-                 style="display:inline-block;background:#e8c97e;color:#0a0a0a;font-weight:bold;padding:14px 28px;border-radius:8px;text-decoration:none;">
-                📥 Преземи ги фотографиите
-              </a>
+          <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;background:#fff;color:#222;">
+            <h2 style="color:#0a0a0a;margin:0 0 12px;">Благодариме за нарачката! 🎉</h2>
+            <p style="margin:0 0 20px;color:#444;">
+              Кликни „Преземи" за секоја фотографија. Линковите важат
+              <strong>една година</strong> и можеш да ги отвораш повеќепати без ограничување.
             </p>
-            <p style="color:#666;font-size:13px;line-height:1.5;">
-              Фотографиите се <strong>постојано достапни</strong> во твојот профил на Photonia.
-              HD резолуција, без watermark.
+
+            <table style="width:100%;border-collapse:collapse;">
+              ${downloadRows}
+            </table>
+
+            <p style="color:#666;font-size:13px;line-height:1.6;margin:28px 0 8px;">
+              За подоцнежен пристап можеш да се најавиш на
+              <a href="${siteUrl}/login" style="color:#0a0a0a;">photonia.mk</a>
+              со оваа е-пошта и ќе ги најдеш сите свои преземања во „Мои преземања".
             </p>
-            <hr style="border:0;border-top:1px solid #eee;margin:32px 0 16px;" />
-            <p style="color:#999;font-size:12px;">
+
+            <hr style="border:0;border-top:1px solid #eee;margin:24px 0 16px;" />
+            <p style="color:#999;font-size:12px;line-height:1.6;">
               Photonia — Македонски Фото Пазар<br/>
-              Ако имаш прашања, контактирај не на info@photonia.mk
+              За технички проблем: <a href="mailto:support@photonia.mk" style="color:#888;">support@photonia.mk</a> · во рок од 72 часа.
             </p>
           </div>
         `,
       });
+      console.log(`[LS webhook] Sent download email to ${buyerEmail} (${items.length} items)`);
     } catch (err) {
       console.error("[LS webhook] Email send failed (non-fatal):", err);
     }
   } else {
-    console.log("[LS webhook] Resend not configured, skipping email");
+    console.log("[LS webhook] Resend not configured or no items — skipping email");
   }
 
   return NextResponse.json({ received: true, order_id: order.id, items: items.length });

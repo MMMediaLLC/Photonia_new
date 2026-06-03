@@ -60,7 +60,7 @@ export default async function HomePage() {
           </h1>
           <p className="text-lg text-[#888] mb-4 max-w-xl mx-auto leading-relaxed">
             Оригинални HD снимки од политички, спортски, општествени и културни настани во Македонија.
-            Купи лиценца, преземи оригинал без watermark.
+            Купи лиценца, преземи оригинал без воден жиг.
           </p>
           <p className="text-sm text-[#555] mb-10">
             Без претплата. Без скриени такси. Инстант преземање.
@@ -137,7 +137,7 @@ export default async function HomePage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-16">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: "Оригинална резолуција", desc: "Без компресија, без watermark" },
+            { label: "Оригинална резолуција", desc: "Без компресија, без воден жиг" },
             { label: "Две лиценци", desc: "Лична и Комерцијална" },
             { label: "Инстант преземање", desc: "Веднаш по плаќање" },
             { label: "Без претплата", desc: "Плаќаш само за тоа што купуваш" },

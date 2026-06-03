@@ -1,25 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+/**
+ * Checkout endpoint — guest-friendly.
+ * Auth is NOT required. Buyer either:
+ *   1) is already logged in → we use the session email + user_id
+ *   2) submits an `email` field as a guest → the webhook auto-creates the user
+ */
 export async function POST(req: NextRequest) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   const body = await req.json();
-  const { items } = body as {
+  const { items, email: bodyEmail } = body as {
     items: { photoId: string; license: string; price: number }[];
+    email?: string;
   };
 
   if (!items?.length) {
     return NextResponse.json({ error: "Empty cart" }, { status: 400 });
   }
 
-  // Auth is required — no guest checkout
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized — please log in first" }, { status: 401 });
+  // Resolve buyer email — session takes precedence, else require it from body
+  const email = (user?.email || bodyEmail || "").trim().toLowerCase();
+  if (!email || !/.+@.+\..+/.test(email)) {
+    return NextResponse.json(
+      { error: "Внеси валидна е-пошта за да продолжиш." },
+      { status: 400 }
+    );
   }
 
-  const email = user.email;
   const storeId = process.env.LEMONSQUEEZY_STORE_ID;
   const apiKey = process.env.LEMONSQUEEZY_API_KEY;
   const variantId = process.env.LEMONSQUEEZY_VARIANT_ID;
@@ -32,17 +42,14 @@ export async function POST(req: NextRequest) {
   }
 
   const total = items.reduce((s, i) => s + i.price, 0);
-  // LemonSqueezy expects custom_price in the smallest currency unit
-  // 1 MKD = 100 deni → 500 MKD becomes 50000
+  // LemonSqueezy expects custom_price in the smallest currency unit (deni)
   const totalInCents = Math.round(total * 100);
 
-  // Build a valid HTTPS redirect URL from the actual request origin
   const origin = req.headers.get("origin") || req.nextUrl.origin;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || origin;
   const isValidHttps = /^https:\/\//.test(siteUrl);
   const redirectUrl = isValidHttps ? `${siteUrl}/checkout/success` : undefined;
 
-  // LemonSqueezy JSON:API format — store/variant go in `relationships`, not `attributes`
   const productOptions: Record<string, unknown> = {
     enabled_variants: [Number(variantId)],
   };
@@ -62,10 +69,11 @@ export async function POST(req: NextRequest) {
           email,
           custom: {
             // LS requires every custom value to be a non-empty string.
-            user_id: user.id,
+            // user_id is sent only when a session exists — webhook auto-creates otherwise.
+            ...(user?.id ? { user_id: user.id } : {}),
             photo_ids: items.map((i) => i.photoId).join(","),
             licenses: items.map((i) => i.license).join(","),
-            buyer_email: email ?? "",
+            buyer_email: email,
           },
         },
       },

@@ -121,11 +121,11 @@ export default function RegisterPage() {
               />
               <span className="text-xs text-[#888] leading-relaxed">
                 Прифаќам ги{" "}
-                <Link href="/terms" className="text-[#e8c97e] hover:underline" target="_blank">
+                <Link href="/legal/terms" className="text-[#e8c97e] hover:underline" target="_blank">
                   Условите за користење
                 </Link>{" "}
                 и{" "}
-                <Link href="/privacy" className="text-[#e8c97e] hover:underline" target="_blank">
+                <Link href="/legal/privacy" className="text-[#e8c97e] hover:underline" target="_blank">
                   Политиката за приватност
                 </Link>
               </span>

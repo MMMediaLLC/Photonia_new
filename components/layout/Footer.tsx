@@ -18,7 +18,7 @@ export default function Footer() {
         <div>
           <p className="text-lg font-bold text-[#e8c97e] mb-2">PHOTONIA</p>
           <p className="text-sm text-[#888] leading-relaxed">
-            Уникатни фотографии од настани, спорт и култура. Купи HD оригинал без watermark, без претплата, веднаш достапно.
+            Уникатни фотографии од настани, спорт и култура. Купи HD оригинал без воден жиг, без претплата, веднаш достапно.
           </p>
         </div>
 
