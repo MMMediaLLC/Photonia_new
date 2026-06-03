@@ -5,7 +5,6 @@ import { useCart } from "@/components/cart/CartProvider";
 import { ShoppingCart, Menu, X } from "lucide-react";
 import { useState } from "react";
 import CartDrawer from "@/components/cart/CartDrawer";
-import UserMenu from "@/components/auth/UserMenu";
 
 export default function Navbar() {
   const { items, openCart } = useCart();
@@ -44,8 +43,6 @@ export default function Navbar() {
                 </span>
               )}
             </button>
-
-            <UserMenu />
 
             <button
               className="md:hidden p-2 rounded-lg hover:bg-white/5 transition-colors"

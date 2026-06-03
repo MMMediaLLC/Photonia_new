@@ -6,7 +6,16 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/components/ui/Toaster";
 
-type View = "login" | "forgot" | "magic";
+/**
+ * Login is for staff only (photographer / admin). Buyers don't log in —
+ * their access path is the email with direct download links.
+ *
+ * Supported methods:
+ *   - Email + password
+ *   - Google OAuth (whitelisted Google accounts)
+ *   - Password reset flow (forgot password)
+ */
+type View = "login" | "forgot";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,32 +24,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [resetEmail, setResetEmail] = useState("");
   const [resetSent, setResetSent] = useState(false);
-  const [magicEmail, setMagicEmail] = useState("");
-  const [magicSent, setMagicSent] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // ── Magic link (passwordless) ───────────────────────────────────────
-  async function handleMagicLink(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const res = await fetch("/api/auth/magic-link", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: magicEmail.trim().toLowerCase(), next: "/account/downloads" }),
-      });
-      if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        toast(j.error ?? "Не може да се испрати линкот", "error");
-      }
-    } catch {
-      // ignore — we still show the generic "if account exists" confirmation
-    }
-    setLoading(false);
-    setMagicSent(true);
-  }
-
-  // ── Email / password login ──────────────────────────────────────────
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -51,7 +36,7 @@ export default function LoginPage() {
       setLoading(false);
       return;
     }
-    let destination = "/account/downloads";
+    let destination = "/dashboard";
     if (data.user) {
       const { data: profile } = await supabase
         .from("users")
@@ -59,13 +44,11 @@ export default function LoginPage() {
         .eq("id", data.user.id)
         .single();
       if (profile?.role === "admin") destination = "/admin";
-      else if (profile?.role === "photographer") destination = "/dashboard";
     }
     router.refresh();
     router.push(destination);
   }
 
-  // ── Google OAuth ────────────────────────────────────────────────────
   async function handleGoogle() {
     setLoading(true);
     const supabase = createClient();
@@ -73,88 +56,23 @@ export default function LoginPage() {
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${origin}/auth/callback?next=${encodeURIComponent("/account/downloads")}`,
+        redirectTo: `${origin}/auth/callback?next=${encodeURIComponent("/dashboard")}`,
       },
     });
   }
 
-  // ── Forgot password ─────────────────────────────────────────────────
   async function handleForgotPassword(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     const supabase = createClient();
     const origin = window.location.origin;
     await supabase.auth.resetPasswordForEmail(resetEmail, {
-      redirectTo: `${origin}/auth/callback?next=${encodeURIComponent("/auth/update-password")}`,
+      redirectTo: `${origin}/auth/callback?next=${encodeURIComponent("/dashboard")}`,
     });
     setLoading(false);
     setResetSent(true);
   }
 
-  // ── Magic-link view ─────────────────────────────────────────────────
-  if (view === "magic") {
-    return (
-      <div className="min-h-screen flex items-center justify-center px-4">
-        <div className="w-full max-w-sm">
-          <div className="text-center mb-8">
-            <Link href="/" className="text-2xl font-bold text-[#e8c97e]">PHOTONIA</Link>
-            <p className="text-[#888] mt-2 text-sm">Најава без лозинка</p>
-          </div>
-
-          {magicSent ? (
-            <div className="bg-[#141414] border border-white/[0.08] rounded-card p-6 text-center">
-              <div className="text-4xl mb-3">✉️</div>
-              <p className="text-[#f0f0f0] font-medium mb-1">Провери ја е-поштата</p>
-              <p className="text-[#888] text-sm">
-                Ако постои профил со <strong>{magicEmail}</strong>, ќе добиеш линк за најава.
-              </p>
-              <p className="text-[#555] text-xs mt-2">Линкот важи 1 час. Провери ја и Spam папката.</p>
-            </div>
-          ) : (
-            <form
-              onSubmit={handleMagicLink}
-              className="bg-[#141414] border border-white/[0.08] rounded-card p-6 flex flex-col gap-4"
-            >
-              <p className="text-xs text-[#888] leading-relaxed">
-                Внеси ја е-поштата со која си купил. Ќе добиеш линк што те најавува без лозинка
-                и те носи во „Мои преземања“.
-              </p>
-              <div>
-                <label className="text-xs text-[#888] mb-1.5 block">Е-пошта</label>
-                <input
-                  type="email"
-                  value={magicEmail}
-                  onChange={(e) => setMagicEmail(e.target.value)}
-                  required
-                  autoFocus
-                  className="w-full bg-[#0a0a0a] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-[#f0f0f0] placeholder:text-[#888] focus:outline-none focus:border-[#e8c97e]/50"
-                  placeholder="tvojata@eposta.mk"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={loading || !magicEmail}
-                className="bg-[#e8c97e] text-[#0a0a0a] font-semibold py-2.5 rounded-card hover:bg-[#d4b46a] transition-colors disabled:opacity-50"
-              >
-                {loading ? "Праќам..." : "Прати линк за најава"}
-              </button>
-            </form>
-          )}
-
-          <p className="text-center text-sm text-[#888] mt-4">
-            <button
-              onClick={() => { setView("login"); setMagicSent(false); }}
-              className="text-[#e8c97e] hover:underline"
-            >
-              ← Назад на најава со лозинка
-            </button>
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Forgot password view ────────────────────────────────────────────
   if (view === "forgot") {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
@@ -171,7 +89,7 @@ export default function LoginPage() {
               <p className="text-[#888] text-sm">
                 Ако постои профил со <strong>{resetEmail}</strong>, ќе добиеш линк за ресетирање.
               </p>
-              <p className="text-[#555] text-xs mt-2">Провери ja и Spam папката.</p>
+              <p className="text-[#555] text-xs mt-2">Провери ја и Spam папката.</p>
             </div>
           ) : (
             <form
@@ -213,17 +131,15 @@ export default function LoginPage() {
     );
   }
 
-  // ── Main login view ─────────────────────────────────────────────────
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <Link href="/" className="text-2xl font-bold text-[#e8c97e]">PHOTONIA</Link>
-          <p className="text-[#888] mt-2 text-sm">Најави се на твојот профил</p>
+          <p className="text-[#888] mt-2 text-sm">Најава за фотографи и админи</p>
         </div>
 
         <div className="bg-[#141414] border border-white/[0.08] rounded-card p-6 flex flex-col gap-4">
-          {/* Google */}
           <button
             onClick={handleGoogle}
             disabled={loading}
@@ -231,14 +147,6 @@ export default function LoginPage() {
           >
             <GoogleIcon />
             Продолжи со Google
-          </button>
-
-          {/* Magic-link CTA — passwordless path for guest-checkout buyers */}
-          <button
-            onClick={() => setView("magic")}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border border-[#e8c97e]/30 bg-[#e8c97e]/[0.05] hover:bg-[#e8c97e]/[0.1] transition-colors text-sm font-medium text-[#e8c97e]"
-          >
-            ✉️ Прати линк за најава
           </button>
 
           <div className="flex items-center gap-3 text-[#444] text-xs">
@@ -289,11 +197,12 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-sm text-[#888] mt-4">
-          Немаш профил?{" "}
-          <Link href="/register" className="text-[#e8c97e] hover:underline">
-            Регистрирај се
+        <p className="text-center text-xs text-[#555] mt-6 leading-relaxed">
+          Купуваш фотографија? Не треба најава — само внеси е-пошта на{" "}
+          <Link href="/checkout" className="text-[#888] hover:text-[#e8c97e]">
+            страницата за плаќање
           </Link>
+          .
         </p>
       </div>
     </div>

@@ -299,11 +299,7 @@ function GuestPanel({
       </button>
 
       <p className="text-[11px] text-[#555] leading-relaxed text-center">
-        Веќе имаш сметка?{" "}
-        <Link href="/login" className="text-[#888] hover:text-[#e8c97e] transition-colors">
-          Најави се
-        </Link>
-        {" "}за да го најдеш претходните преземања.
+        Линковите за преземање ќе ти бидат испратени на оваа е-пошта.
       </p>
     </div>
   );

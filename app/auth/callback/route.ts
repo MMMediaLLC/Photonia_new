@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   const code = searchParams.get("code");
   const tokenHash = searchParams.get("token_hash");
   const type = (searchParams.get("type") ?? "magiclink") as EmailOtpType;
-  const next = searchParams.get("next") || "/account/downloads";
+  const next = searchParams.get("next") || "/dashboard";
 
   // Build an absolute redirect target on our own origin.
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.startsWith("http")

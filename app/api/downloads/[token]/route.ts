@@ -63,6 +63,19 @@ export async function GET(
       return NextResponse.json({ error: "Линкот истече." }, { status: 410 });
     }
 
+    // Hard cap: 2 downloads per purchased item.
+    const DOWNLOAD_LIMIT = 2;
+    const used = item.download_count ?? 0;
+    if (used >= DOWNLOAD_LIMIT) {
+      return NextResponse.json(
+        {
+          error:
+            "Линкот е искористен максималниот број пати. Контактирај support@photonia.mk за повторно преземање.",
+        },
+        { status: 429 }
+      );
+    }
+
     // Supabase types embedded relations as an array; tolerate both shapes.
     const photoRel = item.photo as
       | { cloudinary_public_id: string }
@@ -75,21 +88,27 @@ export async function GET(
       return NextResponse.json({ error: "Фотографијата не е достапна." }, { status: 404 });
     }
 
+    // Increment FIRST so the cap is honoured even under concurrent requests.
+    const { error: updErr } = await supabase
+      .from("order_items")
+      .update({ download_count: used + 1 })
+      .eq("id", item.id);
+    if (updErr) {
+      console.error("[downloads] count update failed:", updErr.message);
+      return NextResponse.json(
+        { error: "Внатрешна грешка. Обиди се повторно." },
+        { status: 500 }
+      );
+    }
+
     // Mint a fresh, short-lived signed URL for the actual file.
     const signedUrl = getDownloadUrl(publicId, 3600);
-
-    // Best-effort analytics increment — never blocks the download.
-    supabase
-      .from("order_items")
-      .update({ download_count: (item.download_count ?? 0) + 1 })
-      .eq("id", item.id)
-      .then(({ error }) => {
-        if (error) console.warn("[downloads] count update failed:", error.message);
-      });
 
     console.log("[downloads] success", {
       token: params.token.slice(0, 6) + "…",
       photoId: publicId,
+      use: used + 1,
+      limit: DOWNLOAD_LIMIT,
     });
 
     return NextResponse.redirect(signedUrl);

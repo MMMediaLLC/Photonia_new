@@ -41,28 +41,17 @@ export async function middleware(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
 
-  // /login or /register — redirect to role's home if already logged in
-  if (user && (path === "/login" || path === "/register")) {
+  // /login — redirect to role's home if already logged in.
+  // (No /account/* — buyers don't log in.)
+  if (user && path === "/login") {
     const { data: profile } = await supabase
       .from("users")
       .select("role")
       .eq("id", user.id)
       .single();
 
-    const home =
-      profile?.role === "admin"
-        ? "/admin"
-        : profile?.role === "photographer"
-        ? "/dashboard"
-        : "/account/downloads";
+    const home = profile?.role === "admin" ? "/admin" : "/dashboard";
     return NextResponse.redirect(new URL(home, request.url));
-  }
-
-  // /account/* — requires any auth
-  if (path.startsWith("/account")) {
-    if (!user) {
-      return NextResponse.redirect(new URL("/login", request.url));
-    }
   }
 
   // /dashboard/* — requires photographer or admin

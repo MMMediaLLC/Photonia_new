@@ -14,7 +14,7 @@ const legalLinks = [
 export default function Footer() {
   return (
     <footer className="border-t border-white/[0.08] mt-24 py-12 px-4">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
         <div>
           <p className="text-lg font-bold text-[#e8c97e] mb-2">PHOTONIA</p>
           <p className="text-sm text-[#888] leading-relaxed">
@@ -39,21 +39,6 @@ export default function Footer() {
             </Link>
             <Link href="/about" className="text-[#f0f0f0] hover:text-[#e8c97e] transition-colors">
               За нас
-            </Link>
-          </div>
-        </div>
-
-        <div>
-          <p className="text-xs uppercase tracking-widest text-[#888] mb-3">Сметка</p>
-          <div className="flex flex-col gap-2 text-sm">
-            <Link href="/login" className="text-[#f0f0f0] hover:text-[#e8c97e] transition-colors">
-              Најава
-            </Link>
-            <Link href="/register" className="text-[#f0f0f0] hover:text-[#e8c97e] transition-colors">
-              Регистрација
-            </Link>
-            <Link href="/account/downloads" className="text-[#f0f0f0] hover:text-[#e8c97e] transition-colors">
-              Мои преземања
             </Link>
           </div>
         </div>

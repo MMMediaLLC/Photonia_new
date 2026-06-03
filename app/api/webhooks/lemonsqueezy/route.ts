@@ -275,7 +275,8 @@ export async function POST(req: NextRequest) {
             <h2 style="color:#0a0a0a;margin:0 0 12px;">Благодариме за нарачката! 🎉</h2>
             <p style="margin:0 0 20px;color:#444;">
               Кликни „Преземи" за секоја фотографија. Линковите важат
-              <strong>една година</strong> и можеш да ги отвораш повеќепати без ограничување.
+              <strong>една година</strong> и можеш да ги отвораш до <strong>два пати</strong> по фотографија.
+              Зачувај ја фотографијата локално веднаш по преземањето.
             </p>
 
             <table style="width:100%;border-collapse:collapse;">
@@ -283,15 +284,14 @@ export async function POST(req: NextRequest) {
             </table>
 
             <p style="color:#666;font-size:13px;line-height:1.6;margin:28px 0 8px;">
-              За подоцнежен пристап можеш да се најавиш на
-              <a href="${siteUrl}/login" style="color:#0a0a0a;">photonia.mk</a>
-              со оваа е-пошта и ќе ги најдеш сите свои преземања во „Мои преземања".
+              Чувај го овој мејл — содржи ги сите твои линкови за преземање.
             </p>
 
             <hr style="border:0;border-top:1px solid #eee;margin:24px 0 16px;" />
             <p style="color:#999;font-size:12px;line-height:1.6;">
               Photonia — Македонски Фото Пазар<br/>
-              За технички проблем: <a href="mailto:support@photonia.mk" style="color:#888;">support@photonia.mk</a> · во рок од 72 часа.
+              За технички проблем или повторно преземање:
+              <a href="mailto:support@photonia.mk" style="color:#888;">support@photonia.mk</a> · во рок од 72 часа.
             </p>
           </div>
         `,
