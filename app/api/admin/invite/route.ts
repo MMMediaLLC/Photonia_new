@@ -32,17 +32,58 @@ export async function POST(req: NextRequest) {
     await resend.emails.send({
       from: process.env.RESEND_FROM ?? "Photonia <onboarding@resend.dev>",
       to: email,
-      subject: "Покана за фотограф на Photonia",
+      subject: "Покана за фотограф на Photonia.mk",
       html: `
-        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;">
-          <h2>Добредојдовте во Photonia!</h2>
-          <p>Поканети сте да се придружите како фотограф на платформата Photonia.mk.</p>
-          <p>Кликнете на копчето подолу за да го активирате вашиот профил:</p>
-          <a href="${inviteUrl}" style="display:inline-block;background:#e8c97e;color:#0a0a0a;font-weight:bold;padding:12px 24px;border-radius:8px;text-decoration:none;margin:16px 0;">
-            Активирај профил
-          </a>
-          <p style="color:#888;font-size:13px;">Или копирајте го овој линк: ${inviteUrl}</p>
-          <p style="color:#888;font-size:12px;">Поканата важи 7 дена.</p>
+        <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;background:#fff;color:#222;">
+          <h2 style="color:#0a0a0a;margin:0 0 12px;">Добредојдовте во Photonia! 📷</h2>
+          <p style="margin:0 0 18px;color:#444;line-height:1.6;">
+            Поканети сте да се придружите како <strong>фотограф</strong> на
+            <a href="https://photonia.mk" style="color:#a07b1f;">photonia.mk</a> —
+            македонски пазар за фотографии од настани, спорт, култура и јавни случувања.
+          </p>
+
+          <div style="background:#fafafa;border:1px solid #eee;border-radius:8px;padding:16px;margin:0 0 18px;">
+            <p style="margin:0 0 10px;font-weight:600;color:#0a0a0a;font-size:14px;">Што добивате</p>
+            <ul style="margin:0;padding-left:18px;color:#444;font-size:13px;line-height:1.7;">
+              <li>Сопствен профил со ваши галерии и продажби</li>
+              <li><strong>80% од секоја продажба</strong> (платформата задржува 20%)</li>
+              <li>Контрола на цените за Лична и Комерцијална лиценца</li>
+              <li>Месечни исплати на крајот од секој месец</li>
+              <li>Авторските права остануваат ваши</li>
+            </ul>
+          </div>
+
+          <div style="background:#fafafa;border:1px solid #eee;border-radius:8px;padding:16px;margin:0 0 24px;">
+            <p style="margin:0 0 10px;font-weight:600;color:#0a0a0a;font-size:14px;">Што се очекува</p>
+            <ul style="margin:0;padding-left:18px;color:#444;font-size:13px;line-height:1.7;">
+              <li>Оригинални фотографии во висока резолуција (мин. 4000 пиксели)</li>
+              <li>Почитување на Editorial Only ознаката за препознатливи лица</li>
+              <li>Согласност со Условите за користење и Лиценцните услови</li>
+            </ul>
+          </div>
+
+          <p style="margin:0 0 14px;color:#444;">
+            Активирајте го профилот со едно кликнување — поканата важи <strong>7 дена</strong>:
+          </p>
+
+          <p style="margin:0 0 16px;">
+            <a href="${inviteUrl}"
+               style="display:inline-block;background:#e8c97e;color:#0a0a0a;font-weight:600;padding:12px 28px;border-radius:8px;text-decoration:none;font-size:14px;">
+              Активирај профил →
+            </a>
+          </p>
+
+          <p style="color:#888;font-size:12px;line-height:1.6;margin:0 0 8px;">
+            Ако копчето не работи, копирајте го овој линк во прелистувачот:<br/>
+            <span style="word-break:break-all;color:#666;">${inviteUrl}</span>
+          </p>
+
+          <hr style="border:0;border-top:1px solid #eee;margin:24px 0 16px;" />
+          <p style="color:#999;font-size:12px;line-height:1.7;">
+            <strong>Photonia.mk</strong> — Македонски Фото Пазар<br/>
+            Прашања: <a href="mailto:info@photonia.mk" style="color:#888;">info@photonia.mk</a><br/>
+            Издавач: M&amp;M Media
+          </p>
         </div>
       `,
     });
