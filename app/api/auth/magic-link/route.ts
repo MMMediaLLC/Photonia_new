@@ -32,18 +32,29 @@ export async function POST(req: NextRequest) {
       ? process.env.NEXT_PUBLIC_SITE_URL
       : new URL(req.url).origin;
 
-  const redirectTo = `${siteUrl}/auth/callback?next=${encodeURIComponent(next ?? "/account/downloads")}`;
-
+  // Generate a magic link, but DON'T use the returned action_link — it routes
+  // through Supabase's verify endpoint which redirects with an implicit
+  // (#access_token) fragment that the server can't read. Instead we take the
+  // hashed_token and build our own link to /auth/callback, where the server
+  // calls verifyOtp({ token_hash }) and sets cookies. This is the
+  // @supabase/ssr-recommended pattern for custom email templates.
   const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
     type: "magiclink",
     email,
-    options: { redirectTo },
   });
 
-  if (linkError || !linkData?.properties?.action_link) {
-    console.error("[magic-link] generate failed:", linkError);
+  const hashedToken = linkData?.properties?.hashed_token;
+  if (linkError || !hashedToken) {
+    console.error("[magic-link] generate failed:", linkError?.message);
     return NextResponse.json({ error: "Не може да се генерира линк" }, { status: 500 });
   }
+
+  const nextPath = next ?? "/account/downloads";
+  const actionLink =
+    `${siteUrl}/auth/callback` +
+    `?token_hash=${encodeURIComponent(hashedToken)}` +
+    `&type=magiclink` +
+    `&next=${encodeURIComponent(nextPath)}`;
 
   // Send via Resend if available
   const resendKey = process.env.RESEND_API_KEY;
@@ -56,7 +67,7 @@ export async function POST(req: NextRequest) {
         from: fromAddress,
         to: email,
         subject: "Твојот линк за пристап на Photonia",
-        html: magicLinkEmailHtml(linkData.properties.action_link),
+        html: magicLinkEmailHtml(actionLink),
       });
     } catch (err) {
       console.error("[magic-link] email send failed:", err);
