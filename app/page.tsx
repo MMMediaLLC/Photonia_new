@@ -43,26 +43,26 @@ const HOW_IT_WORKS = [
   {
     icon: Search,
     step: "01",
-    title: "Најди ја фотографијата",
-    desc: "Пребарувај по настан, тема или фотограф и отвори ја галеријата.",
+    title: "Пребарај фотографии",
+    desc: "Разгледај ги галериите и пронајди ги фотографиите што ти се потребни.",
   },
   {
     icon: ShoppingCart,
     step: "02",
-    title: "Избери лиценца",
-    desc: "Лична за приватна употреба или Комерцијална за деловна намена.",
+    title: "Додај во кошничка",
+    desc: "Додај ги избраните фотографии во кошничката и продолжи кон наплата.",
   },
   {
     icon: CheckCircle,
     step: "03",
-    title: "Плати безбедно",
-    desc: "Внеси е-пошта и плати со картичка. Сметката се создава автоматски.",
+    title: "Плати со картичка",
+    desc: "Внеси е-пошта и плати безбедно. Корисничката сметка се создава автоматски.",
   },
   {
     icon: Download,
     step: "04",
-    title: "Преземи HD оригинал",
-    desc: "Линкови за преземање стасуваат во твојата е-пошта веднаш по плаќањето.",
+    title: "Преземи фотографии",
+    desc: "Линковите за преземање ќе бидат испратени на твојата е-пошта веднаш по плаќањето.",
   },
 ];
 
@@ -309,9 +309,9 @@ export default async function HomePage() {
               <p className="text-xs uppercase tracking-widest text-[#e8c97e] mb-2">
                 Како функционира
               </p>
-              <h2 className="text-2xl font-bold mb-3">Од клик до HD фотографија — за 2 минути</h2>
+              <h2 className="text-2xl font-bold mb-3">Од клик до оригинална фотографија — за 2 минути</h2>
               <p className="text-[#888] text-sm max-w-lg mx-auto">
-                Едноставно, безбедно и без месечна претплата.
+                Едноставно, безбедно и брзо.
               </p>
             </div>
 
@@ -409,27 +409,16 @@ export default async function HomePage() {
               <p className="text-xs uppercase tracking-widest text-[#e8c97e] mb-3">
                 За организатори
               </p>
-              <h2 className="text-2xl sm:text-3xl font-bold mb-4">
+              <h2 className="text-2xl sm:text-3xl font-bold mb-8">
                 Сакате и вашиот настан да биде претставен?
               </h2>
-              <p className="text-[#888] mb-8 max-w-lg mx-auto leading-relaxed">
-                Контактирајте нѐ за професионално покривање на ваш настан — концерт,
-                спортска средба, корпоративен настан или културна манифестација. Фотографиите
-                остануваат достапни за купување од учесниците и публиката.
-              </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <div className="flex items-center justify-center">
                 <a
-                  href="mailto:info@photonia.mk?subject=Покривање%20на%20настан"
+                  href="mailto:info@photonia.mk?subject=Закажување%20на%20настан"
                   className="inline-flex items-center gap-2 bg-[#e8c97e] text-[#0a0a0a] font-bold px-8 py-3.5 rounded-card hover:bg-[#d4b46a] transition-colors"
                 >
-                  Контактирај нѐ <ArrowRight size={16} />
+                  Закажи настан <ArrowRight size={16} />
                 </a>
-                <Link
-                  href="/press"
-                  className="inline-flex items-center gap-2 border border-white/[0.12] text-[#f0f0f0] font-medium px-8 py-3.5 rounded-card hover:border-white/25 transition-colors"
-                >
-                  За медиуми и пакети
-                </Link>
               </div>
             </div>
           </div>

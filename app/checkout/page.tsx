@@ -207,7 +207,7 @@ function LoggedInPanel({
         )}
       </button>
       <p className="text-xs text-[#555] text-center">
-        Плаќањето го обработува LemonSqueezy · SSL шифрирано
+        Плаќањето се обработува безбедно · SSL шифрирано
       </p>
     </div>
   );
@@ -279,7 +279,7 @@ function GuestPanel({
           )}
         </button>
         <p className="text-xs text-[#555] text-center leading-relaxed">
-          Плаќањето го обработува LemonSqueezy · SSL шифрирано
+          Плаќањето се обработува безбедно · SSL шифрирано
         </p>
       </form>
 
