@@ -5,27 +5,39 @@ import { getDownloadUrl } from "@/lib/cloudinary";
 /**
  * Public download route — no session required.
  *
- * The token in the email is the permanent (1-year) access right.
- * On each request we mint a fresh short-lived (1h) signed Cloudinary URL
- * and 302 to it, so the raw asset is never permanently exposed.
+ * The token in the email is the access right. Each purchased item may be
+ * downloaded a maximum of DOWNLOAD_LIMIT times within a 1-year window.
  *
- * Token validity: 1 year from order creation. NO download-count limit.
+ * The counter is bumped ONLY on a genuine delivery — i.e. after the signed
+ * Cloudinary URL is successfully generated, right before the redirect.
+ * Error paths (unknown / expired / over-limit / misconfig) never count, and
+ * link-scanner / prefetch hits are served without consuming a download, so a
+ * mailbox provider scanning the link doesn't exhaust it.
  */
+const DOWNLOAD_LIMIT = 2;
+
+function isPrefetch(req: NextRequest): boolean {
+  const h = req.headers;
+  return (
+    (h.get("sec-purpose")?.includes("prefetch") ?? false) ||
+    h.get("purpose") === "prefetch" ||
+    h.get("x-purpose") === "preview" ||
+    h.get("x-moz") === "prefetch"
+  );
+}
+
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: { token: string } }
 ) {
   // ── Env sanity — fail fast & loud, never a raw 500 ──────────────────
   const cloudName =
     process.env.CLOUDINARY_CLOUD_NAME ?? process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
   if (!cloudName || !process.env.CLOUDINARY_API_SECRET) {
-    console.error(
-      "[downloads] Cloudinary not configured on this environment",
-      {
-        hasCloud: !!cloudName,
-        hasSecret: !!process.env.CLOUDINARY_API_SECRET,
-      }
-    );
+    console.error("[downloads] Cloudinary not configured", {
+      hasCloud: !!cloudName,
+      hasSecret: !!process.env.CLOUDINARY_API_SECRET,
+    });
     return NextResponse.json(
       { error: "Услугата за преземање привремено е недостапна. Обиди се повторно." },
       { status: 503 }
@@ -55,7 +67,6 @@ export async function GET(
     }
 
     if (!item) {
-      // Genuinely unknown token — not an error condition.
       return NextResponse.json({ error: "Линкот не е валиден." }, { status: 404 });
     }
 
@@ -63,14 +74,14 @@ export async function GET(
       return NextResponse.json({ error: "Линкот истече." }, { status: 410 });
     }
 
-    // Hard cap: 2 downloads per purchased item.
-    const DOWNLOAD_LIMIT = 2;
+    // Hard cap — checked BEFORE any increment, so an over-limit token never
+    // climbs past the limit no matter how many times it's hit.
     const used = item.download_count ?? 0;
     if (used >= DOWNLOAD_LIMIT) {
       return NextResponse.json(
         {
           error:
-            "Линкот е искористен максималниот број пати. Контактирај support@photonia.mk за повторно преземање.",
+            "Достигнавте лимит од 2 преземања за оваа фотографија. За повторно преземање контактирајте support@photonia.mk.",
         },
         { status: 429 }
       );
@@ -88,7 +99,18 @@ export async function GET(
       return NextResponse.json({ error: "Фотографијата не е достапна." }, { status: 404 });
     }
 
-    // Increment FIRST so the cap is honoured even under concurrent requests.
+    // Mint the signed URL first — if this throws, no download is consumed.
+    const signedUrl = getDownloadUrl(publicId, 3600);
+
+    // Mailbox link-scanners / browser prefetch: serve the redirect target is
+    // NOT what we want (it would let them fetch the file). Return a no-content
+    // response WITHOUT counting. A real user navigation re-requests normally.
+    if (isPrefetch(req)) {
+      console.log("[downloads] prefetch ignored (not counted):", params.token.slice(0, 6) + "…");
+      return new NextResponse(null, { status: 204 });
+    }
+
+    // Genuine delivery — bump the counter now, then redirect to the file.
     const { error: updErr } = await supabase
       .from("order_items")
       .update({ download_count: used + 1 })
@@ -101,19 +123,13 @@ export async function GET(
       );
     }
 
-    // Mint a fresh, short-lived signed URL for the actual file.
-    const signedUrl = getDownloadUrl(publicId, 3600);
-
-    console.log("[downloads] success", {
+    console.log("[downloads] delivered", {
       token: params.token.slice(0, 6) + "…",
-      photoId: publicId,
-      use: used + 1,
-      limit: DOWNLOAD_LIMIT,
+      use: `${used + 1}/${DOWNLOAD_LIMIT}`,
     });
 
     return NextResponse.redirect(signedUrl);
   } catch (err) {
-    // Surface the REAL cause in logs; return a clean error to the client.
     console.error("[downloads] unhandled error:", err);
     return NextResponse.json(
       { error: "Грешка при подготовка на преземањето. Обиди се повторно." },

@@ -318,7 +318,7 @@ function OrderSummary({
         <span className="text-lg font-bold text-[#e8c97e]">{formatPrice(total)}</span>
       </div>
       <p className="text-[10px] text-[#555] text-center leading-relaxed">
-        HD без воден жиг · <strong className="text-[#888]">2 преземања</strong> во рок од <strong className="text-[#888]">1 година</strong>
+        HD без воден жиг · Линкот важи една година
       </p>
     </div>
   );
