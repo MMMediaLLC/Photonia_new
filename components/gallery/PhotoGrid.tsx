@@ -1,12 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { ShoppingCart, ZoomIn, ChevronLeft, ChevronRight, X, Check } from "lucide-react";
+import { ShoppingCart, ZoomIn, ChevronLeft, ChevronRight, X, Check, ArrowRight } from "lucide-react";
 import type { Gallery, Photo, LicenseType } from "@/lib/types";
 import { LICENSE_TYPES } from "@/lib/types";
 import { getCloudinaryWatermarkedUrl, formatPrice } from "@/lib/utils";
 import { useCart } from "@/components/cart/CartProvider";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -16,6 +17,7 @@ interface Props {
 
 export default function PhotoGrid({ photos, gallery }: Props) {
   const { addItem, items } = useCart();
+  const router = useRouter();
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [selectedLicense, setSelectedLicense] = useState<LicenseType>("personal");
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ?? "";
@@ -208,51 +210,61 @@ export default function PhotoGrid({ photos, gallery }: Props) {
             )}
           </div>
 
-          {/* Bottom: license selector + buy */}
+          {/* Bottom: license selector + buy, OR post-add CTAs */}
           <div
             className="px-4 sm:px-6 py-4 bg-gradient-to-t from-black/80 to-transparent landscape:max-md:absolute landscape:max-md:bottom-0 landscape:max-md:left-0 landscape:max-md:right-0 landscape:max-md:z-10 landscape:max-md:py-2"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-3 landscape:max-md:flex-row landscape:max-md:gap-2">
-              {/* License pills — only show if price > 0 */}
-              <div className="flex gap-2 flex-1 overflow-x-auto pb-1 landscape:max-md:pb-0">
-                {availableLicenses.map((lic) => (
-                  <button
-                    key={lic}
-                    onClick={() => setSelectedLicense(lic)}
-                    className={cn(
-                      "flex-1 min-w-[110px] px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors border whitespace-nowrap landscape:max-md:min-w-[90px] landscape:max-md:py-1",
-                      selectedLicense === lic
-                        ? "bg-[#e8c97e]/15 border-[#e8c97e] text-[#e8c97e]"
-                        : "bg-white/[0.04] border-white/[0.08] text-white/70 hover:bg-white/[0.08]"
-                    )}
-                  >
-                    <div>{LICENSE_TYPES[lic].label}</div>
-                    <div className="text-[11px] opacity-80">
-                      {formatPrice(priceForLicense(lightboxPhoto, lic))}
-                    </div>
-                  </button>
-                ))}
+            {lightboxInCart ? (
+              /* In cart → two clear CTAs (no second overlay) */
+              <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-stretch gap-2.5">
+                <button
+                  onClick={() => router.push("/checkout")}
+                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-card text-sm font-semibold bg-[#e8c97e] text-[#0a0a0a] hover:bg-[#d4b46a] transition-colors"
+                >
+                  Кон каса <ArrowRight size={16} />
+                </button>
+                <button
+                  onClick={closeLightbox}
+                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-card text-sm font-medium border border-white/[0.15] text-white/80 hover:bg-white/[0.06] transition-colors"
+                >
+                  Продолжи со разгледување
+                </button>
               </div>
+            ) : (
+              <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-3 landscape:max-md:flex-row landscape:max-md:gap-2">
+                {/* License pills — only show if price > 0 */}
+                <div className="flex gap-2 flex-1 min-w-0 overflow-x-auto pb-1 landscape:max-md:pb-0">
+                  {availableLicenses.map((lic) => (
+                    <button
+                      key={lic}
+                      onClick={() => setSelectedLicense(lic)}
+                      className={cn(
+                        "flex-1 min-w-[110px] px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors border whitespace-nowrap landscape:max-md:min-w-[90px] landscape:max-md:py-1",
+                        selectedLicense === lic
+                          ? "bg-[#e8c97e]/15 border-[#e8c97e] text-[#e8c97e]"
+                          : "bg-white/[0.04] border-white/[0.08] text-white/70 hover:bg-white/[0.08]"
+                      )}
+                    >
+                      <div>{LICENSE_TYPES[lic].label}</div>
+                      <div className="text-[11px] opacity-80">
+                        {formatPrice(priceForLicense(lightboxPhoto, lic))}
+                      </div>
+                    </button>
+                  ))}
+                </div>
 
-              {/* Buy button */}
-              <button
-                onClick={() => addItem(lightboxPhoto, gallery, selectedLicense)}
-                disabled={lightboxInCart}
-                className={cn(
-                  "flex items-center justify-center gap-2 px-5 py-3 rounded-card text-sm font-semibold transition-colors flex-shrink-0 landscape:max-md:px-3 landscape:max-md:py-2",
-                  lightboxInCart
-                    ? "bg-[#4caf7d]/20 text-[#4caf7d] cursor-default"
-                    : "bg-[#e8c97e] text-[#0a0a0a] hover:bg-[#d4b46a]"
-                )}
-              >
-                {lightboxInCart ? (
-                  <><Check size={16} /> <span className="landscape:max-md:hidden">Веќе во кошничка</span></>
-                ) : (
-                  <><ShoppingCart size={16} /> <span className="landscape:max-md:hidden">Додај — </span>{formatPrice(priceForLicense(lightboxPhoto, selectedLicense))}</>
-                )}
-              </button>
-            </div>
+                {/* Add button — does NOT open the drawer (avoids stacking overlays) */}
+                <button
+                  onClick={() => addItem(lightboxPhoto, gallery, selectedLicense, false)}
+                  className="flex items-center justify-center gap-2 px-5 py-3 rounded-card text-sm font-semibold transition-colors flex-shrink-0 bg-[#e8c97e] text-[#0a0a0a] hover:bg-[#d4b46a] landscape:max-md:px-3 landscape:max-md:py-2"
+                >
+                  <ShoppingCart size={16} />
+                  <span className="landscape:max-md:hidden">Додај — </span>
+                  {formatPrice(priceForLicense(lightboxPhoto, selectedLicense))}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

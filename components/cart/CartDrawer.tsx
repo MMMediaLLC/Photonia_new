@@ -1,7 +1,7 @@
 "use client";
 
 import { useCart } from "./CartProvider";
-import { X, ShoppingCart, Trash2 } from "lucide-react";
+import { X, ShoppingCart, Trash2, ArrowRight } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import type { LicenseType } from "@/lib/types";
 import { LICENSE_TYPES } from "@/lib/types";
@@ -122,27 +122,27 @@ export default function CartDrawer() {
           )}
         </div>
 
-        {/* Footer */}
+        {/* Sticky footer — always visible above the fold of the drawer */}
         {items.length > 0 && (
-          <div className="px-6 py-5 border-t border-white/[0.08]">
-            <div className="bg-[#0a0a0a] border border-white/[0.06] rounded-lg p-3 mb-4 text-xs text-[#888] leading-relaxed">
-              <p className="text-[#f0f0f0] font-medium mb-1">✓ Што добиваш:</p>
-              <p>HD оригинал во висока резолуција, без воден жиг, веднаш достапно за преземање.</p>
-            </div>
-
+          <div className="flex-shrink-0 px-6 py-5 border-t border-white/[0.08] bg-[#141414]">
             <div className="flex justify-between items-center mb-4">
               <span className="text-[#888] text-sm">Вкупно</span>
-              <span className="text-xl font-bold text-[#e8c97e]">{formatPrice(total)}</span>
+              <span className="text-xl font-bold text-[#e8c97e] whitespace-nowrap">
+                {formatPrice(total)}
+              </span>
             </div>
             <button
               onClick={handleCheckout}
               className="w-full flex items-center justify-center gap-2 bg-[#e8c97e] text-[#0a0a0a] font-semibold py-3 rounded-card hover:bg-[#d4b46a] transition-colors"
             >
-              Заврши купување
+              Кон каса <ArrowRight size={16} />
             </button>
-            <p className="text-xs text-[#888] text-center mt-3">
-              🔒 Безбедна наплата · Без претплата · Веднаш преземаш
-            </p>
+            <button
+              onClick={closeCart}
+              className="w-full text-center text-sm text-[#888] hover:text-[#f0f0f0] transition-colors mt-3 py-1"
+            >
+              Продолжи со купување
+            </button>
           </div>
         )}
       </aside>

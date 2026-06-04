@@ -306,16 +306,16 @@ function OrderSummary({
                   {item.license === "personal" ? "Лична лиценца" : "Комерцијална лиценца"}
                 </p>
               </div>
-              <span className="text-xs font-semibold text-[#e8c97e] flex-shrink-0 mt-0.5">
+              <span className="text-xs font-semibold text-[#e8c97e] flex-shrink-0 whitespace-nowrap mt-0.5 pl-2">
                 {formatPrice(price)}
               </span>
             </div>
           );
         })}
       </div>
-      <div className="border-t border-white/[0.06] pt-3 flex justify-between items-center">
+      <div className="border-t border-white/[0.06] pt-3 flex justify-between items-center gap-2">
         <span className="text-sm text-[#888]">Вкупно</span>
-        <span className="text-lg font-bold text-[#e8c97e]">{formatPrice(total)}</span>
+        <span className="text-lg font-bold text-[#e8c97e] whitespace-nowrap">{formatPrice(total)}</span>
       </div>
       <p className="text-[10px] text-[#555] text-center leading-relaxed">
         HD без воден жиг

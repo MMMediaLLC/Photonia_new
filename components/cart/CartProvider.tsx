@@ -12,7 +12,9 @@ import type { CartItem, LicenseType, Photo, Gallery } from "@/lib/types";
 
 interface CartContextType {
   items: CartItem[];
-  addItem: (photo: Photo, gallery?: Gallery, license?: LicenseType) => void;
+  // openDrawer defaults to true; pass false to add without opening the drawer
+  // (e.g. from inside the lightbox, to avoid stacking two overlays).
+  addItem: (photo: Photo, gallery?: Gallery, license?: LicenseType, openDrawer?: boolean) => void;
   removeItem: (photoId: string) => void;
   updateLicense: (photoId: string, license: LicenseType) => void;
   clearCart: () => void;
@@ -49,13 +51,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [items, hydrated]);
 
-  const addItem = useCallback((photo: Photo, gallery?: Gallery, license: LicenseType = "personal") => {
-    setItems((prev) => {
-      if (prev.some((i) => i.photo.id === photo.id)) return prev;
-      return [...prev, { photo, license, gallery }];
-    });
-    setIsOpen(true);
-  }, []);
+  const addItem = useCallback(
+    (photo: Photo, gallery?: Gallery, license: LicenseType = "personal", openDrawer = true) => {
+      setItems((prev) => {
+        if (prev.some((i) => i.photo.id === photo.id)) return prev;
+        return [...prev, { photo, license, gallery }];
+      });
+      if (openDrawer) setIsOpen(true);
+    },
+    []
+  );
 
   const removeItem = useCallback((photoId: string) => {
     setItems((prev) => prev.filter((i) => i.photo.id !== photoId));
