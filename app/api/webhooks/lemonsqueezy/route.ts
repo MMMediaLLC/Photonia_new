@@ -267,7 +267,7 @@ export async function POST(req: NextRequest) {
           return `
             <tr>
               <td style="padding:14px 0;border-bottom:1px solid #eee;font-size:14px;color:#222;">
-                <div style="font-weight:600;color:#0a0a0a;">📷 ${escape(photoTitle)}</div>
+                <div style="font-weight:600;color:#0a0a0a;">${escape(photoTitle)}</div>
                 ${
                   galleryTitle
                     ? `<div style="color:#888;font-size:12px;margin-top:2px;">${escape(galleryTitle)} · ${licenseLabel} лиценца</div>`
@@ -300,17 +300,22 @@ export async function POST(req: NextRequest) {
       const licenseNotes = `
         ${
           hasPersonal
-            ? `<p style="margin:0 0 8px;color:#444;font-size:13px;line-height:1.6;">
-                 <strong style="color:#0a0a0a;">Лична лиценца</strong> — за приватна употреба:
-                 лично печатење, лични профили, домашна архива.
+            ? `<p style="margin:0 0 14px;color:#444;font-size:13px;line-height:1.7;">
+                 <strong style="color:#0a0a0a;">Лична лиценца</strong> е наменета за приватна,
+                 некомерцијална употреба, лична архива, печатење за себе или објава на лични
+                 профили. Не е дозволена употреба за реклами, продажба, промоција на бизнис или
+                 медиумски/комерцијални објави.
                </p>`
             : ""
         }
         ${
           hasCommercial
-            ? `<p style="margin:0;color:#444;font-size:13px;line-height:1.6;">
-                 <strong style="color:#0a0a0a;">Комерцијална лиценца</strong> — за деловна употреба:
-                 веб, реклами, маркетинг, печатени материјали.
+            ? `<p style="margin:0;color:#444;font-size:13px;line-height:1.7;">
+                 <strong style="color:#0a0a0a;">Комерцијална лиценца</strong> е наменета за деловна
+                 и јавна употреба, веб-страници, реклами, маркетинг, социјални мрежи на компании,
+                 печатени материјали и промотивни содржини. Со оваа лиценца фотографијата може
+                 легално да се користи за претставување производ, услуга, настан, бренд или
+                 организација.
                </p>`
             : ""
         }
@@ -319,33 +324,31 @@ export async function POST(req: NextRequest) {
       await resend.emails.send({
         from: fromAddress,
         to: buyerEmail,
-        subject: "Твоите фотографии се подготвени за преземање",
+        subject: "Вашите фотографии се подготвени за преземање",
         html: `
           <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;background:#fff;color:#222;">
-            <h2 style="color:#0a0a0a;margin:0 0 6px;">Благодариме за нарачката! 🎉</h2>
+            <h2 style="color:#0a0a0a;margin:0 0 6px;">Благодариме за нарачката</h2>
             <p style="margin:0 0 18px;color:#888;font-size:13px;">
               Нарачка <strong style="color:#444;">#${escape(orderRef)}</strong> · ${escape(purchaseDate)}
             </p>
 
             <p style="margin:0 0 20px;color:#444;line-height:1.6;">
-              Твоите фотографии се подготвени за преземање. Линковите важат
-              <strong>една година</strong> и можеш да ги отвораш до <strong>два пати</strong>
-              по фотографија.
+              Вашите фотографии се подготвени за преземање. Линковите важат
+              <strong>една година</strong> од денот на купувањето.
             </p>
 
             <table style="width:100%;border-collapse:collapse;border-top:1px solid #eee;">
               ${downloadRows}
             </table>
 
-            <div style="background:#fffbe8;border:1px solid #f5dd6c;border-radius:8px;padding:14px;margin:24px 0 20px;font-size:13px;color:#665100;line-height:1.5;">
-              📩 <strong>Чувајте го овој мејл</strong> — содржи ги сите ваши линкови за преземање.
-              Лимитот е <strong>2 преземања</strong> по фотографија. Препорачуваме веднаш да ги
-              зачувате фотографиите локално.
+            <div style="background:#f7f7f7;border:1px solid #e2e2e2;border-radius:8px;padding:16px;margin:24px 0 22px;font-size:13px;color:#333;line-height:1.6;">
+              <strong style="color:#0a0a0a;">Чувајте го овој мејл!</strong> Тоа е вашиот доказ за
+              сопственост. Препорачуваме веднаш да ги зачувате фотографиите на вашиот уред.
             </div>
 
             <div style="margin:0 0 24px;">
               <p style="margin:0 0 10px;font-weight:600;color:#0a0a0a;font-size:13px;">
-                Кратко за лиценците
+                Услови на лиценцата
               </p>
               ${licenseNotes}
             </div>
