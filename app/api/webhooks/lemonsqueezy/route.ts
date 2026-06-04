@@ -221,8 +221,8 @@ export async function POST(req: NextRequest) {
       photographer_amount: price * rate,
       platform_amount: price * (1 - rate),
       download_token: generateToken(48),
-      // Downloads do not expire — buyer always has access in their profile
-      download_expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+      // Download link is valid for 30 days from purchase.
+      download_expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     });
   }
 
@@ -333,8 +333,8 @@ export async function POST(req: NextRequest) {
             </p>
 
             <p style="margin:0 0 20px;color:#444;line-height:1.6;">
-              Вашите фотографии се подготвени за преземање. Линковите важат
-              <strong>една година</strong> од денот на купувањето.
+              Вашите фотографии се подготвени за преземање. Линковите за преземање важат
+              <strong>30 дена</strong> од купувањето.
             </p>
 
             <table style="width:100%;border-collapse:collapse;border-top:1px solid #eee;">

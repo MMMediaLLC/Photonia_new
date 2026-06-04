@@ -3,17 +3,20 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { getDownloadUrl } from "@/lib/cloudinary";
 
 /**
- * Public download route — no session required.
+ * Public download route — no session required. Direct link: click → download.
  *
- * The token in the email is the access right. Each purchased item may be
- * downloaded a maximum of DOWNLOAD_LIMIT times within a 1-year window.
+ * The file is streamed THROUGH this route (not a redirect) so we can count a
+ * download only when the transfer actually completes. The counter is bumped
+ * exactly once, when the whole file has been read and handed to the client.
+ *   - Interrupted / aborted transfer  → stream `cancel` fires → NOT counted.
+ *   - Prefetch / mailbox link-scanner → 204, never streamed, NOT counted.
+ *   - Over the limit / expired / bad  → clean JSON message, never a 500.
  *
- * The counter is bumped ONLY on a genuine delivery — i.e. after the signed
- * Cloudinary URL is successfully generated, right before the redirect.
- * Error paths (unknown / expired / over-limit / misconfig) never count, and
- * link-scanner / prefetch hits are served without consuming a download, so a
- * mailbox provider scanning the link doesn't exhaust it.
+ * The two downloads are a buyer's second chance, not a trap — so anything
+ * short of a genuine completed download leaves the count untouched.
  */
+export const maxDuration = 60;
+
 const DOWNLOAD_LIMIT = 2;
 
 function isPrefetch(req: NextRequest): boolean {
@@ -24,6 +27,16 @@ function isPrefetch(req: NextRequest): boolean {
     h.get("x-purpose") === "preview" ||
     h.get("x-moz") === "prefetch"
   );
+}
+
+function safeFilename(title: string | null | undefined): string {
+  // Strip only filesystem-unsafe characters; keep Cyrillic/Latin letters.
+  const base = (title ?? "")
+    .trim()
+    .replace(/[\\/:*?"<>|]+/g, "")
+    .replace(/\s+/g, "-")
+    .slice(0, 80);
+  return base || "photonia-photo";
 }
 
 export async function GET(
@@ -54,10 +67,9 @@ export async function GET(
   try {
     const supabase = createAdminClient();
 
-    // Lookup via service-role client so RLS never hides a valid row.
     const { data: item, error: lookupError } = await supabase
       .from("order_items")
-      .select("id, download_token, download_expires_at, download_count, photo:photos(cloudinary_public_id)")
+      .select("id, download_token, download_expires_at, download_count, photo:photos(cloudinary_public_id, title)")
       .eq("download_token", params.token)
       .maybeSingle();
 
@@ -65,23 +77,20 @@ export async function GET(
       console.error("[downloads] lookup failed:", lookupError.message);
       return NextResponse.json({ error: "Внатрешна грешка при пребарување." }, { status: 500 });
     }
-
     if (!item) {
       return NextResponse.json({ error: "Линкот не е валиден." }, { status: 404 });
     }
-
     if (new Date(item.download_expires_at) < new Date()) {
       return NextResponse.json({ error: "Линкот истече." }, { status: 410 });
     }
 
-    // Hard cap — checked BEFORE any increment, so an over-limit token never
-    // climbs past the limit no matter how many times it's hit.
+    // Hard cap — checked before any transfer, never climbs past the limit.
     const used = item.download_count ?? 0;
     if (used >= DOWNLOAD_LIMIT) {
       return NextResponse.json(
         {
           error:
-            "Достигнавте лимит од 2 преземања за оваа фотографија. За повторно преземање контактирајте support@photonia.mk.",
+            "Достигнат е лимитот на преземања за оваа фотографија. За повторно преземање контактирајте support@photonia.mk.",
         },
         { status: 429 }
       );
@@ -89,8 +98,8 @@ export async function GET(
 
     // Supabase types embedded relations as an array; tolerate both shapes.
     const photoRel = item.photo as
-      | { cloudinary_public_id: string }
-      | { cloudinary_public_id: string }[]
+      | { cloudinary_public_id: string; title: string | null }
+      | { cloudinary_public_id: string; title: string | null }[]
       | null;
     const photo = Array.isArray(photoRel) ? photoRel[0] : photoRel;
     const publicId = photo?.cloudinary_public_id;
@@ -99,36 +108,81 @@ export async function GET(
       return NextResponse.json({ error: "Фотографијата не е достапна." }, { status: 404 });
     }
 
-    // Mint the signed URL first — if this throws, no download is consumed.
-    const signedUrl = getDownloadUrl(publicId, 3600);
-
-    // Mailbox link-scanners / browser prefetch: serve the redirect target is
-    // NOT what we want (it would let them fetch the file). Return a no-content
-    // response WITHOUT counting. A real user navigation re-requests normally.
+    // Mailbox scanners / browser prefetch: never stream, never count.
     if (isPrefetch(req)) {
       console.log("[downloads] prefetch ignored (not counted):", params.token.slice(0, 6) + "…");
       return new NextResponse(null, { status: 204 });
     }
 
-    // Genuine delivery — bump the counter now, then redirect to the file.
-    const { error: updErr } = await supabase
-      .from("order_items")
-      .update({ download_count: used + 1 })
-      .eq("id", item.id);
-    if (updErr) {
-      console.error("[downloads] count update failed:", updErr.message);
+    // Fetch the actual file from a short-lived signed Cloudinary URL.
+    const signedUrl = getDownloadUrl(publicId, 3600);
+    const upstream = await fetch(signedUrl);
+    if (!upstream.ok || !upstream.body) {
+      console.error("[downloads] upstream fetch failed:", upstream.status);
       return NextResponse.json(
-        { error: "Внатрешна грешка. Обиди се повторно." },
-        { status: 500 }
+        { error: "Грешка при подготовка на преземањето. Обиди се повторно." },
+        { status: 502 }
       );
     }
 
-    console.log("[downloads] delivered", {
-      token: params.token.slice(0, 6) + "…",
-      use: `${used + 1}/${DOWNLOAD_LIMIT}`,
+    const contentType = upstream.headers.get("content-type") ?? "application/octet-stream";
+    const ext = contentType.includes("png")
+      ? "png"
+      : contentType.includes("webp")
+      ? "webp"
+      : "jpg";
+    const filename = `${safeFilename(photo?.title)}.${ext}`;
+    // ASCII fallback for legacy clients + RFC 5987 UTF-8 for the rest.
+    const asciiName = filename.replace(/[^\x20-\x7E]/g, "_");
+    const dispo = `attachment; filename="${asciiName}"; filename*=UTF-8''${encodeURIComponent(filename)}`;
+
+    // Pass the body through, incrementing the counter ONLY when the whole
+    // file has been read (done). A client abort triggers `cancel` instead,
+    // which leaves the count untouched.
+    const reader = upstream.body.getReader();
+    let counted = false;
+
+    const stream = new ReadableStream<Uint8Array>({
+      async pull(controller) {
+        const { done, value } = await reader.read();
+        if (done) {
+          controller.close();
+          if (!counted) {
+            counted = true;
+            // Fire-and-forget: the transfer is already complete for the client.
+            supabase
+              .from("order_items")
+              .update({ download_count: used + 1 })
+              .eq("id", item.id)
+              .then(({ error }) => {
+                if (error) console.error("[downloads] count update failed:", error.message);
+                else
+                  console.log("[downloads] completed", {
+                    token: params.token.slice(0, 6) + "…",
+                    use: `${used + 1}/${DOWNLOAD_LIMIT}`,
+                  });
+              });
+          }
+          return;
+        }
+        controller.enqueue(value);
+      },
+      cancel(reason) {
+        // Client aborted before finishing — do NOT count this attempt.
+        console.log("[downloads] transfer cancelled (not counted):", params.token.slice(0, 6) + "…");
+        reader.cancel(reason).catch(() => {});
+      },
     });
 
-    return NextResponse.redirect(signedUrl);
+    const contentLength = upstream.headers.get("content-length");
+    const headers: Record<string, string> = {
+      "Content-Type": contentType,
+      "Content-Disposition": dispo,
+      "Cache-Control": "no-store",
+    };
+    if (contentLength) headers["Content-Length"] = contentLength;
+
+    return new NextResponse(stream, { status: 200, headers });
   } catch (err) {
     console.error("[downloads] unhandled error:", err);
     return NextResponse.json(
